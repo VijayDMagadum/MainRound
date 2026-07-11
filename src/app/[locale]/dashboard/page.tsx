@@ -4,6 +4,7 @@ import { getForecast } from "@/lib/weather/open-meteo";
 import { calculateRisk, maxRisk } from "@/lib/weather/risk-engine";
 import { getDictionary } from "@/lib/i18n";
 import { redirect } from "next/navigation";
+import DashboardLocationLoader from "@/components/layout/DashboardLocationLoader";
 import Link from "next/link";
 import RainfallChart from "@/components/weather/RainfallChart";
 import DashboardControls from "@/components/weather/DashboardControls";
@@ -38,6 +39,8 @@ export default async function DashboardPage({ params, searchParams }: PageProps)
   let weatherData = null;
   let checklistItems: any[] = [];
   let userObs: any[] = [];
+
+  let showLoader = false;
 
   if (isDemo) {
     // 1. Setup Demo Mock Profile
@@ -134,26 +137,29 @@ export default async function DashboardPage({ params, searchParams }: PageProps)
       });
       
       if (!primaryLocation) {
-        // No location set, redirect to onboarding wizard
-        redirect(`/${locale}/onboarding`);
+        showLoader = true;
+      } else {
+        // Fetch weather
+        weatherData = await getForecast(primaryLocation.latitude, primaryLocation.longitude);
+        
+        // Load checklist progress
+        checklistItems = await prisma.checklistItem.findMany({
+          where: { sessionId },
+        });
+
+        // Load active observation reports
+        userObs = await prisma.userObservation.findMany({
+          orderBy: { createdAt: "desc" },
+          take: 3
+        });
       }
-
-      // Fetch weather
-      weatherData = await getForecast(primaryLocation.latitude, primaryLocation.longitude);
-      
-      // Load checklist progress
-      checklistItems = await prisma.checklistItem.findMany({
-        where: { sessionId },
-      });
-
-      // Load active observation reports
-      userObs = await prisma.userObservation.findMany({
-        orderBy: { createdAt: "desc" },
-        take: 3
-      });
     } catch (e) {
       console.error("Database connection issue in dashboard:", e);
     }
+  }
+
+  if (showLoader) {
+    return <DashboardLocationLoader locale={locale} />;
   }
 
   // Calculate overall risk
