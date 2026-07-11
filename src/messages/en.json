@@ -1,0 +1,73 @@
+{
+  "nav": {
+    "dashboard": "Dashboard",
+    "preparedness": "Preparedness Plan",
+    "checklist": "Emergency Checklist",
+    "travel": "Travel Advisory",
+    "assistant": "AI Assistant",
+    "alerts": "Alerts Hub",
+    "community": "Community Coordination",
+    "recovery": "Post-Storm Recovery",
+    "settings": "Settings",
+    "privacy": "Privacy Policy",
+    "about": "About App"
+  },
+  "common": {
+    "appName": "Monsoon Saathi",
+    "tagline": "Your AI Preparedness & Safety Companion",
+    "riskLabel": "App-Estimated Risk",
+    "low": "Low",
+    "moderate": "Moderate",
+    "high": "High",
+    "severe": "Severe",
+    "refresh": "Refresh",
+    "lastUpdated": "Last updated",
+    "save": "Save",
+    "delete": "Delete",
+    "cancel": "Cancel",
+    "confirm": "Confirm",
+    "loading": "Loading...",
+    "phase": "Event Phase",
+    "demoMode": "Demo Mode Active"
+  },
+  "phases": {
+    "normal": "Normal Mode - Plan Ahead",
+    "prepare": "Prepare Mode - Incoming Storm",
+    "active": "Active Mode - Seek Shelter",
+    "recovery": "Recovery Mode - Clean up & Rebuild"
+  },
+  "onboarding": {
+    "title": "Welcome to Monsoon Saathi",
+    "subtitle": "Let's set up your profile to customize your weather-aware emergency plans.",
+    "step1": "Select Primary Location",
+    "step2": "Household Vulnerabilities",
+    "step3": "Transit & Emergency Contacts",
+    "locationPlaceholder": "Search for your town, city, or district...",
+    "dwellingLabel": "Dwelling Type",
+    "floorLabel": "Floor Level",
+    "waterloggingProneLabel": "This area is known to experience waterlogging / street flooding",
+    "nearHazardLabel": "Residing near open drains, rivers, slopes, or coastal areas",
+    "upperFloorLabel": "I have access to a safe upper floor or alternate tall structure",
+    "peopleCountLabel": "Number of household members",
+    "adults": "Adults",
+    "children": "Children (under 12)",
+    "elders": "Older Adults (65+)",
+    "petsLabel": "We have pets in the household",
+    "accessibilityLabel": "Someone in the household has mobility or accessibility limitations",
+    "medicalPowerLabel": "We depend on electricity for critical medical equipment",
+    "travelModeLabel": "Preferred Daily Travel Mode",
+    "contactsLabel": "Emergency Contacts",
+    "useDemo": "Use Demo Profile",
+    "getStarted": "Get Started"
+  },
+  "dashboard": {
+    "riskTitle": "Current Risk Summary",
+    "riskExpl": "App-estimated risk is based on live Open-Meteo feeds and your household profile. Follow official announcements.",
+    "dangerWindow": "Next high risk weather window",
+    "noWindow": "No hazardous window expected in the next 72 hours.",
+    "chartTitle": "72-Hour Rainfall Forecast (mm)",
+    "activeRecs": "Active Precautions",
+    "emergencyTitle": "Immediate Lifesaving Actions",
+    "offlineNotice": "You are currently viewing offline cached weather."
+  }
+}

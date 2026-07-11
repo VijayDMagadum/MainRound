@@ -1,0 +1,236 @@
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model UserSession {
+  id                    String                 @id @default(uuid())
+  createdAt             DateTime               @default(now())
+  updatedAt             DateTime               @updatedAt
+  profile               HouseholdProfile?
+  locations             SavedLocation[]
+  preparednessPlan      PreparednessPlan?
+  preparednessTasks     PreparednessTask[]
+  checklistItems        ChecklistItem[]
+  weatherSnapshots      WeatherSnapshot[]
+  riskAssessments       RiskAssessment[]
+  alertAcknowledgements AlertAcknowledgement[]
+  travelAdvisories      TravelAdvisory[]
+  emergencyContacts     EmergencyContact[]
+  communityPlan         CommunityPlan?
+  pushSubscriptions     PushSubscription[]
+  userObservations      UserObservation[]
+}
+
+model HouseholdProfile {
+  id                    String      @id @default(uuid())
+  sessionId             String      @unique
+  session               UserSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  dwellingType          String      // apartment, house, temporary, hostel, other
+  floorLevel            Int         @default(0)
+  waterloggingProne     Boolean     @default(false)
+  nearHazardSource      Boolean     @default(false) // river, drain, slope, coastal
+  hasUpperFloor         Boolean     @default(false)
+  adults                Int         @default(1)
+  children              Int         @default(0)
+  olderAdults           Int         @default(0)
+  pets                  Boolean     @default(false)
+  accessibilityNeeds    Boolean     @default(false)
+  medicalPowerDependent Boolean     @default(false)
+  vehicleAvailable      String      // none, 2wheeler, 4wheeler
+  preferredTravelMode   String      // public, private
+  emergencyContacts     String      // JSON string of contact details
+  preferredLanguage     String      @default("en") // en, hi, mr
+  createdAt             DateTime    @default(now())
+  updatedAt             DateTime    @updatedAt
+}
+
+model SavedLocation {
+  id          String      @id @default(uuid())
+  sessionId   String
+  session     UserSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  name        String
+  latitude    Float
+  longitude   Float
+  isPrimary   Boolean     @default(false)
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+
+  @@index([sessionId])
+}
+
+model PreparednessPlan {
+  id          String      @id @default(uuid())
+  sessionId   String      @unique
+  session     UserSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  title       String
+  summary     String
+  riskLevel   String
+  explanation String
+  confidence  String
+  planData    String      // Full JSON string of PreparednessPlanResponse
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+}
+
+model PreparednessTask {
+  id          String      @id @default(uuid())
+  sessionId   String
+  session     UserSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  title       String
+  description String
+  category    String      // home, family, supplies, etc.
+  priority    String      // critical, high, medium, low
+  timeframe   String
+  isCompleted Boolean     @default(false)
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+
+  @@index([sessionId])
+}
+
+model ChecklistItem {
+  id          String      @id @default(uuid())
+  sessionId   String
+  session     UserSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  category    String      // water, food, medicine, lighting, etc.
+  title       String
+  description String
+  quantity    String?
+  isRequired  Boolean     @default(true)
+  isCompleted Boolean     @default(false)
+  isCustom    Boolean     @default(false)
+  position    Int         @default(0)
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+
+  @@index([sessionId])
+}
+
+model WeatherSnapshot {
+  id           String      @id @default(uuid())
+  sessionId    String
+  session      UserSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  latitude     Float
+  longitude    Float
+  locationName String
+  data         String      // JSON string of the forecast data
+  createdAt    DateTime    @default(now())
+
+  @@index([sessionId])
+  @@index([createdAt])
+}
+
+model RiskAssessment {
+  id        String      @id @default(uuid())
+  sessionId String
+  session   UserSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  overall   String
+  data      String      // JSON string of MonsoonRiskAssessment
+  createdAt DateTime    @default(now())
+
+  @@index([sessionId])
+  @@index([createdAt])
+}
+
+model Alert {
+  id                String   @id @default(uuid())
+  severity          String   // low, moderate, high, severe
+  hazardType        String   // heavyRain, flooding, thunderstorm, wind, etc.
+  location          String
+  latitude          Float?
+  longitude         Float?
+  startTime         DateTime
+  endTime           DateTime
+  reason            String
+  recommendedActions String   // JSON array of strings
+  dataSource        String
+  isOfficial        Boolean  @default(false)
+  createdAt         DateTime @default(now())
+
+  @@index([startTime])
+  @@index([endTime])
+}
+
+model AlertAcknowledgement {
+  id             String      @id @default(uuid())
+  sessionId      String
+  session        UserSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  alertId        String      // UUID of the Alert
+  acknowledgedAt DateTime    @default(now())
+
+  @@unique([sessionId, alertId])
+}
+
+model TravelAdvisory {
+  id           String      @id @default(uuid())
+  sessionId    String
+  session      UserSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  origin       String
+  destination  String
+  travelMode   String
+  advisoryData String      // JSON string of TravelAdvisoryResponse
+  createdAt    DateTime    @default(now())
+
+  @@index([sessionId])
+}
+
+model EmergencyContact {
+  id               String      @id @default(uuid())
+  sessionId        String
+  session          UserSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  name             String
+  relationship     String
+  phone            String
+  isLocalAuthority Boolean     @default(false)
+  createdAt        DateTime    @default(now())
+  updatedAt        DateTime    @updatedAt
+
+  @@index([sessionId])
+}
+
+model CommunityPlan {
+  id                   String      @id @default(uuid())
+  sessionId            String      @unique
+  session              UserSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  neighborhoodName     String
+  volunteerAssignments String      // JSON string of assignments
+  vulnerableChecklist  String      // JSON string
+  sharedInventory      String      // JSON string of inventory
+  meetingPlace         String
+  contactTree          String      // JSON string
+  createdAt            DateTime    @default(now())
+  updatedAt            DateTime    @updatedAt
+}
+
+model PushSubscription {
+  id        String      @id @default(uuid())
+  sessionId String
+  session   UserSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  endpoint  String      @unique
+  p256dh    String
+  auth      String
+  createdAt DateTime    @default(now())
+
+  @@index([sessionId])
+}
+
+model UserObservation {
+  id          String      @id @default(uuid())
+  sessionId   String
+  session     UserSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  hazardType  String      // flooding, waterlogging, fallen_tree, power_outage, wind_damage, other
+  severity    String      // low, moderate, high, severe
+  location    String
+  latitude    Float?
+  longitude   Float?
+  description String
+  createdAt   DateTime    @default(now())
+
+  @@index([sessionId])
+  @@index([createdAt])
+}
