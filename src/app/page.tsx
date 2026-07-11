@@ -1,8 +1,13 @@
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
+import { connection } from "next/server";
 import { prisma } from "@/lib/db/prisma";
 
+export const runtime = "nodejs";
+
 export default async function RootPage() {
+  await connection();
+
   const cookieStore = await cookies();
   const sessionId = cookieStore.get("session_id")?.value;
   

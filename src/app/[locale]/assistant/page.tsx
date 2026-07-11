@@ -2,12 +2,17 @@ import { getSessionId } from "@/lib/db/session";
 import { prisma } from "@/lib/db/prisma";
 import { getForecast } from "@/lib/weather/open-meteo";
 import AssistantChat from "@/components/assistant/AssistantChat";
+import { connection } from "next/server";
 
 interface PageProps {
   params: Promise<{ locale: string }>;
 }
 
+export const runtime = "nodejs";
+
 export default async function AssistantPage({ params }: PageProps) {
+  await connection();
+
   const { locale } = await params;
   const sessionId = await getSessionId();
 

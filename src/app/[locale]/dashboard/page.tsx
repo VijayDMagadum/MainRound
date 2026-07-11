@@ -4,6 +4,7 @@ import { getForecast } from "@/lib/weather/open-meteo";
 import { calculateRisk, maxRisk } from "@/lib/weather/risk-engine";
 import { getDictionary } from "@/lib/i18n";
 import { redirect } from "next/navigation";
+import { connection } from "next/server";
 import DashboardLocationLoader from "@/components/layout/DashboardLocationLoader";
 import Link from "next/link";
 import RainfallChart from "@/components/weather/RainfallChart";
@@ -26,7 +27,11 @@ interface PageProps {
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 }
 
+export const runtime = "nodejs";
+
 export default async function DashboardPage({ params, searchParams }: PageProps) {
+  await connection();
+
   const { locale } = await params;
   const sParams = await searchParams;
   const isDemo = sParams.demo === "true";

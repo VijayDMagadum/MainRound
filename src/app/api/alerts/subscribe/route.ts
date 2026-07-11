@@ -2,6 +2,8 @@ import { getSessionId } from "@/lib/db/session";
 import { prisma } from "@/lib/db/prisma";
 import { NextRequest, NextResponse } from "next/server";
 
+export const runtime = "nodejs";
+
 export async function POST(req: NextRequest) {
   try {
     const sessionId = await getSessionId();

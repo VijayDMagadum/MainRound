@@ -4,6 +4,9 @@ import { calculateRisk } from "@/lib/weather/risk-engine";
 import { NextRequest, NextResponse } from "next/server";
 import webpush from "web-push";
 
+export const dynamic = "force-dynamic";
+export const runtime = "nodejs";
+
 export async function GET(req: NextRequest) {
   console.log("[API/Cron/CheckAlerts] Starting automated alerts check...");
 

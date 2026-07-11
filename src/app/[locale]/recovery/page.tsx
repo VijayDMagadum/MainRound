@@ -1,12 +1,17 @@
 import RecoveryPlanner from "@/components/recovery/RecoveryPlanner";
 import { getSessionId } from "@/lib/db/session";
 import { prisma } from "@/lib/db/prisma";
+import { connection } from "next/server";
 
 interface PageProps {
   params: Promise<{ locale: string }>;
 }
 
+export const runtime = "nodejs";
+
 export default async function RecoveryPage({ params }: PageProps) {
+  await connection();
+
   const { locale } = await params;
   const sessionId = await getSessionId();
 
