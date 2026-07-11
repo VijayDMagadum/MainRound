@@ -9,13 +9,17 @@ export async function getSessionId(): Promise<string> {
     try {
       const session = await prisma.userSession.create({ data: {} });
       sessionId = session.id;
-      cookieStore.set("session_id", sessionId, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === "production",
-        sameSite: "lax",
-        maxAge: 60 * 60 * 24 * 365, // 1 year
-        path: "/",
-      });
+      try {
+        cookieStore.set("session_id", sessionId, {
+          httpOnly: true,
+          secure: process.env.NODE_ENV === "production",
+          sameSite: "lax",
+          maxAge: 60 * 60 * 24 * 365, // 1 year
+          path: "/",
+        });
+      } catch (cookieErr) {
+        // Safe to ignore in Server Component render context.
+      }
     } catch (e) {
       console.error("Failed to create anonymous database session:", e);
       // Fallback to random ID if database is locked or failing, to ensure app works

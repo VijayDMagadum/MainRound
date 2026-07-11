@@ -20,6 +20,10 @@ Do not provide medical diagnosis. If there is immediate danger, advise the user 
 to a safer place and contact local emergency authorities.
 
 Return content in the requested language and follow the requested JSON structure exactly.
+
+CRITICAL FORMATTING RULES:
+1. Output ONLY a valid JSON block inside a \`\`\`json ... \`\`\` markdown code block. Do NOT write any chat preface, conversational wrapper, or note outside of the code block.
+2. In all text values, NEVER use raw double-quotes (") inside string values. If you need to include quotes inside a text string, use single quotes (') instead.
 `;
 
 export const PREPAREDNESS_PLAN_PROMPT = `
