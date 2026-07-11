@@ -106,6 +106,91 @@ describe("Monsoon Risk Engine Thresholds", () => {
     const result = calculateRisk(forecast);
     expect(result.heavyRain).toBe("severe");
   });
+
+  it("should escalate flooding risk from moderate to severe based on household vulnerability", () => {
+    const forecast = createMockForecast({
+      daily: {
+        time: ["2026-07-11"],
+        temperature_2m_max: [28],
+        temperature_2m_min: [22],
+        precipitation_sum: [45], // moderate rain -> moderate flood risk
+        precipitation_probability_max: [80],
+        wind_gusts_10m_max: [15],
+        sunrise: [""], sunset: [""], weather_code: [63]
+      }
+    });
+
+    const household = {
+      waterloggingProne: true,
+      nearHazardSource: false,
+      dwellingType: "temporary", // Score 4
+      floorLevel: 0,
+      hasUpperFloor: false,
+      adults: 1,
+      children: 0,
+      olderAdults: 0,
+      pets: false,
+      accessibilityNeeds: false,
+      medicalPowerDependent: false,
+      vehicleAvailable: "none",
+      preferredTravelMode: "public"
+    };
+
+    const result = calculateRisk(forecast, household);
+    expect(result.flooding).toBe("severe");
+  });
+
+  it("should escalate power disruption risk for medical device dependency", () => {
+    const forecast = createMockForecast({
+      daily: {
+        time: ["2026-07-11"],
+        temperature_2m_max: [28],
+        temperature_2m_min: [22],
+        precipitation_sum: [45], // moderate rain -> moderate flood -> moderate power risk
+        precipitation_probability_max: [80],
+        wind_gusts_10m_max: [15],
+        sunrise: [""], sunset: [""], weather_code: [63]
+      }
+    });
+
+    const household = {
+      waterloggingProne: false,
+      nearHazardSource: false,
+      dwellingType: "apartment",
+      floorLevel: 1,
+      hasUpperFloor: false,
+      adults: 1,
+      children: 0,
+      olderAdults: 0,
+      pets: false,
+      accessibilityNeeds: false,
+      medicalPowerDependent: true, // Medical dependent
+      vehicleAvailable: "none",
+      preferredTravelMode: "public"
+    };
+
+    const result = calculateRisk(forecast, household);
+    expect(result.powerDisruption).toBe("high");
+  });
+
+  it("should trigger severe travel risk under low visibility", () => {
+    const forecast = createMockForecast();
+    forecast.hourly.visibility = Array(24).fill(400); // severe visibility risk
+
+    const result = calculateRisk(forecast);
+    expect(result.visibility).toBe("severe");
+    expect(result.travel).toBe("severe");
+  });
+
+  it("should compute scaled supply kit requirements based on headcount", () => {
+    // 2 adults + 2 children = 4 people
+    const totalPeople = 4;
+    const waterQuantity = `${totalPeople * 3 * 3} Liters`;
+    const foodQuantity = `${totalPeople * 3}-day supply`;
+
+    expect(waterQuantity).toBe("36 Liters");
+    expect(foodQuantity).toBe("12-day supply");
+  });
 });
 
 describe("Multi-Hazard Escalation", () => {

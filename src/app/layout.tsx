@@ -3,8 +3,8 @@ import "./globals.css";
 import PWARegister from "@/components/layout/PWARegister";
 
 export const metadata: Metadata = {
-  title: "Monsoon Saathi - AI Safety Companion",
-  description: "AI-powered monsoon preparedness and safety assistant",
+  title: "Monsoon Preparedness & Citizen Assistance - Monsoon Saathi",
+  description: "A GenAI-powered solution that helps individuals, families, and communities prepare for the monsoon season. Leverages Generative AI to provide personalized preparedness plans, weather-aware guidance, emergency checklists, travel advisories, safety recommendations, multilingual assistance, and real-time alerts before, during, and after severe weather events.",
   manifest: "/manifest.webmanifest",
 };
 

@@ -57,8 +57,20 @@ export default async function LandingPage({ params }: PageProps) {
         </div>
       </div>
 
+      {/* Problem Statement Mission Banner */}
+      <div className="mt-8 bg-slate-900/35 border border-slate-900/90 rounded-3xl p-6 max-w-4xl text-left space-y-3 mx-4">
+        <h2 className="text-xs font-bold text-teal-400 uppercase tracking-widest">
+          Monsoon Preparedness & Citizen Assistance
+        </h2>
+        <p className="text-xs text-slate-300 leading-relaxed">
+          Monsoon Saathi is a GenAI-powered solution designed to help individuals, families, and communities prepare for the monsoon season. 
+          The solution leverages Generative AI to provide personalized preparedness plans, weather-aware guidance, emergency checklists, 
+          travel advisories, safety recommendations, multilingual assistance, and real-time alerts before, during, and after severe weather events.
+        </p>
+      </div>
+
       {/* Feature Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-5xl w-full mt-16 md:mt-24 px-4">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-5xl w-full mt-12 md:mt-16 px-4">
         {/* Card 1 */}
         <div className="glass-card p-6 rounded-2xl space-y-3">
           <div className="bg-teal-500/10 text-teal-400 p-2.5 rounded-xl border border-teal-500/20 w-fit">

@@ -62,6 +62,7 @@ export default function AssistantChat({
     if (initialQuery) {
       sendMessage(initialQuery);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [initialQuery]);
 
   // Auto scroll

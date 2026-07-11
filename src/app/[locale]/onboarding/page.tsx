@@ -63,14 +63,6 @@ export default function OnboardingPage({ params }: { params: Promise<{ locale: s
   const [searchingCities, setSearchingCities] = useState(false);
   const [submitting, setSubmitting] = useState(false);
 
-  // Await page params
-  useEffect(() => {
-    params.then((p) => {
-      setLocale(p.locale);
-      setValue("preferredLanguage", p.locale as any);
-    });
-  }, [params]);
-
   const { register, handleSubmit, setValue, watch, control, formState: { errors } } = useForm<any>({
     resolver: zodResolver(OnboardingFormSchema),
     defaultValues: {
@@ -94,6 +86,14 @@ export default function OnboardingPage({ params }: { params: Promise<{ locale: s
       preferredLanguage: "en",
     }
   });
+
+  // Await page params
+  useEffect(() => {
+    params.then((p) => {
+      setLocale(p.locale);
+      setValue("preferredLanguage", p.locale as any);
+    });
+  }, [params, setValue]);
 
   const { fields, append, remove } = useFieldArray({
     control,

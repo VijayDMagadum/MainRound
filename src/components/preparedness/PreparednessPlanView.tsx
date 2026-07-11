@@ -36,38 +36,32 @@ export default function PreparednessPlanView({
   const [loading, setLoading] = useState(false);
   const [completedActions, setCompletedActions] = useState<Record<string, boolean>>({});
 
-  // Trigger loading when locations list is available
-  useEffect(() => {
-    if (locations && locations.length > 0) {
-      const primary = locations.find(l => l.isPrimary) || locations[0];
-      setSelectedLocId(primary.id);
-      loadPlanForLocation(primary.id, forecast);
-    }
-  }, [locations]);
-
   // Load / Fetch plan details
-  const loadPlanForLocation = async (locId: string, initialForecastObj?: any) => {
-    const cached = localStorage.getItem(`preparednessPlan_${locId}`);
-    const cachedCompleted = localStorage.getItem(`preparednessPlanCompleted_${locId}`);
-    
-    if (cachedCompleted) {
-      try {
-        setCompletedActions(JSON.parse(cachedCompleted));
-      } catch (e) {
-        setCompletedActions({});
-      }
-    } else {
-      setCompletedActions({});
-    }
+  const fetchPlan = async (locId: string, locForecast: any) => {
+    setLoading(true);
+    try {
+      const res = await fetch("/api/ai/preparedness-plan", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          household,
+          forecast: locForecast,
+          locale
+        }),
+      });
 
-    if (cached) {
-      try {
-        setPlan(JSON.parse(cached));
-      } catch (e) {
-        await getForecastAndPlan(locId, initialForecastObj);
+      if (!res.ok) {
+        throw new Error("Failed to fetch plan");
       }
-    } else {
-      await getForecastAndPlan(locId, initialForecastObj);
+
+      const data = await res.json();
+      setPlan(data);
+      localStorage.setItem(`preparednessPlan_${locId}`, JSON.stringify(data));
+    } catch (err) {
+      console.error(err);
+      alert("Error compiling AI plan. Displaying local deterministic backups.");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -97,34 +91,41 @@ export default function PreparednessPlanView({
     }
   };
 
-  // Fetch plan from server API
-  const fetchPlan = async (locId: string, locForecast: any) => {
-    setLoading(true);
-    try {
-      const res = await fetch("/api/ai/preparedness-plan", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          household,
-          forecast: locForecast,
-          locale
-        }),
-      });
-
-      if (!res.ok) {
-        throw new Error("Failed to fetch plan");
+  // Load / Fetch plan details
+  const loadPlanForLocation = async (locId: string, initialForecastObj?: any) => {
+    const cached = localStorage.getItem(`preparednessPlan_${locId}`);
+    const cachedCompleted = localStorage.getItem(`preparednessPlanCompleted_${locId}`);
+    
+    if (cachedCompleted) {
+      try {
+        setCompletedActions(JSON.parse(cachedCompleted));
+      } catch (e) {
+        setCompletedActions({});
       }
+    } else {
+      setCompletedActions({});
+    }
 
-      const data = await res.json();
-      setPlan(data);
-      localStorage.setItem(`preparednessPlan_${locId}`, JSON.stringify(data));
-    } catch (err) {
-      console.error(err);
-      alert("Error compiling AI plan. Displaying local deterministic backups.");
-    } finally {
-      setLoading(false);
+    if (cached) {
+      try {
+        setPlan(JSON.parse(cached));
+      } catch (e) {
+        await getForecastAndPlan(locId, initialForecastObj);
+      }
+    } else {
+      await getForecastAndPlan(locId, initialForecastObj);
     }
   };
+
+  // Trigger loading when locations list is available
+  useEffect(() => {
+    if (locations && locations.length > 0) {
+      const primary = locations.find(l => l.isPrimary) || locations[0];
+      setSelectedLocId(primary.id);
+      loadPlanForLocation(primary.id, forecast);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [locations]);
 
   // Location Selector Switcher
   const handleLocationSwitch = async (locId: string) => {
