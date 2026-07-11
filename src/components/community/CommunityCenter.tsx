@@ -157,6 +157,7 @@ export default function CommunityCenter() {
             <input
               type="text"
               required
+              aria-label="Volunteer Name"
               value={newVolName}
               onChange={(e) => setNewVolName(e.target.value)}
               placeholder="Volunteer name"
@@ -165,6 +166,7 @@ export default function CommunityCenter() {
             <input
               type="text"
               required
+              aria-label="Volunteer Phone Number"
               value={newVolPhone}
               onChange={(e) => setNewVolPhone(e.target.value)}
               placeholder="10 digit phone"
@@ -172,6 +174,7 @@ export default function CommunityCenter() {
             />
             <div className="flex gap-2">
               <select
+                aria-label="Volunteer Role Select"
                 value={newVolRole}
                 onChange={(e) => setNewVolRole(e.target.value)}
                 className="flex-1 bg-slate-900 border border-slate-800 rounded-xl px-2.5 text-[11px] text-slate-300 outline-none"
@@ -235,6 +238,7 @@ export default function CommunityCenter() {
             <input
               type="text"
               required
+              aria-label="Resident Flat Number"
               value={newResFlat}
               onChange={(e) => setNewResFlat(e.target.value)}
               placeholder="Flat e.g. A-102"
@@ -243,14 +247,16 @@ export default function CommunityCenter() {
             <input
               type="text"
               required
+              aria-label="Resident Name"
               value={newResName}
               onChange={(e) => setNewResName(e.target.value)}
               placeholder="Name/Family specs"
               className="glass-input px-3 py-2 text-xs rounded-xl"
             />
             <div className="flex items-center gap-2">
-              <label className="flex items-center gap-1.5 text-xs text-slate-400 shrink-0 cursor-pointer">
+              <label htmlFor="resident-mobility-check" className="flex items-center gap-1.5 text-xs text-slate-400 shrink-0 cursor-pointer">
                 <input
+                  id="resident-mobility-check"
                   type="checkbox"
                   checked={newResMobility}
                   onChange={(e) => setNewResMobility(e.target.checked)}
@@ -277,8 +283,9 @@ export default function CommunityCenter() {
           </p>
 
           <div className="space-y-1.5">
-            <label className="text-[10px] text-slate-350 uppercase tracking-widest font-semibold">Warning Severity</label>
+            <label htmlFor="sms-severity-select" className="text-[10px] text-slate-350 uppercase tracking-widest font-semibold">Warning Severity</label>
             <select
+              id="sms-severity-select"
               value={smsSeverity}
               onChange={(e) => setSmsSeverity(e.target.value)}
               className="w-full bg-slate-900 border border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-300 outline-none"
@@ -289,8 +296,9 @@ export default function CommunityCenter() {
           </div>
 
           <div className="space-y-1.5">
-            <label className="text-[10px] text-slate-350 uppercase tracking-widest font-semibold">Alert Core Topic</label>
+            <label htmlFor="sms-subject-select" className="text-[10px] text-slate-350 uppercase tracking-widest font-semibold">Alert Core Topic</label>
             <select
+              id="sms-subject-select"
               value={smsSubject}
               onChange={(e) => setSmsSubject(e.target.value)}
               className="w-full bg-slate-900 border border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-300 outline-none"

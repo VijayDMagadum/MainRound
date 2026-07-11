@@ -180,10 +180,11 @@ export default function TravelForm({ locale }: TravelFormProps) {
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
           {/* Origin Search */}
           <div className="space-y-2 relative">
-            <label className="text-xs text-slate-300 font-semibold flex items-center gap-1">
+            <label htmlFor="origin-input" className="text-xs text-slate-300 font-semibold flex items-center gap-1">
               <MapPin className="w-3.5 h-3.5 text-teal-400" /> Departure Location (Origin)
             </label>
             <input
+              id="origin-input"
               type="text"
               value={originQuery}
               onChange={(e) => setOriginQuery(e.target.value)}
@@ -226,10 +227,11 @@ export default function TravelForm({ locale }: TravelFormProps) {
 
           {/* Destination Search */}
           <div className="space-y-2 relative">
-            <label className="text-xs text-slate-300 font-semibold flex items-center gap-1">
+            <label htmlFor="destination-input" className="text-xs text-slate-300 font-semibold flex items-center gap-1">
               <MapPin className="w-3.5 h-3.5 text-teal-400" /> Arrival Location (Destination)
             </label>
             <input
+              id="destination-input"
               type="text"
               value={destQuery}
               onChange={(e) => setDestQuery(e.target.value)}
@@ -274,10 +276,11 @@ export default function TravelForm({ locale }: TravelFormProps) {
         {/* Other settings */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 pt-2">
           <div className="space-y-2">
-            <label className="text-xs text-slate-300 font-semibold flex items-center gap-1.5">
+            <label htmlFor="travel-mode-select" className="text-xs text-slate-300 font-semibold flex items-center gap-1.5">
               <Car className="w-3.5 h-3.5 text-slate-400" /> Commute Vehicle
             </label>
             <select
+              id="travel-mode-select"
               value={travelMode}
               onChange={(e) => setTravelMode(e.target.value)}
               className="w-full bg-slate-900 border border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-300 outline-none"
@@ -289,10 +292,11 @@ export default function TravelForm({ locale }: TravelFormProps) {
           </div>
 
           <div className="space-y-2">
-            <label className="text-xs text-slate-300 font-semibold flex items-center gap-1.5">
+            <label htmlFor="departure-time-input" className="text-xs text-slate-300 font-semibold flex items-center gap-1.5">
               <Calendar className="w-3.5 h-3.5 text-slate-400" /> Departure Date/Time
             </label>
             <input
+              id="departure-time-input"
               type="datetime-local"
               value={departureTime}
               onChange={(e) => setDepartureTime(e.target.value)}
@@ -301,8 +305,9 @@ export default function TravelForm({ locale }: TravelFormProps) {
           </div>
 
           <div className="space-y-3 pt-6 flex flex-col justify-end">
-            <label className="flex items-center gap-2 text-xs text-slate-350 cursor-pointer">
+            <label htmlFor="flexible-schedule" className="flex items-center gap-2 text-xs text-slate-350 cursor-pointer">
               <input
+                id="flexible-schedule"
                 type="checkbox"
                 checked={flexible}
                 onChange={(e) => setFlexible(e.target.checked)}
@@ -311,8 +316,9 @@ export default function TravelForm({ locale }: TravelFormProps) {
               <span>Flexible schedule to postpone</span>
             </label>
             
-            <label className="flex items-center gap-2 text-xs text-slate-355 cursor-pointer">
+            <label htmlFor="has-vulnerable" className="flex items-center gap-2 text-xs text-slate-355 cursor-pointer">
               <input
+                id="has-vulnerable"
                 type="checkbox"
                 checked={hasVulnerable}
                 onChange={(e) => setHasVulnerable(e.target.checked)}

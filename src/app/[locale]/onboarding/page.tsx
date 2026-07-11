@@ -279,8 +279,9 @@ export default function OnboardingPage({ params }: { params: Promise<{ locale: s
 
             {/* Location Search Bar */}
             <div className="space-y-2 relative">
-              <label className="text-xs text-slate-300 font-semibold">City or Town Name</label>
+              <label htmlFor="onboarding-city-search" className="text-xs text-slate-300 font-semibold">City or Town Name</label>
               <input
+                id="onboarding-city-search"
                 type="text"
                 value={cityQuery}
                 onChange={(e) => setCityQuery(e.target.value)}
@@ -332,10 +333,11 @@ export default function OnboardingPage({ params }: { params: Promise<{ locale: s
             {/* Dwelling type */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-2">
-                <label className="text-xs text-slate-300 font-semibold flex items-center gap-1.5">
+                <label htmlFor="onboarding-dwelling-type" className="text-xs text-slate-300 font-semibold flex items-center gap-1.5">
                   <Home className="w-3.5 h-3.5 text-slate-400" /> Dwelling Type
                 </label>
                 <select
+                  id="onboarding-dwelling-type"
                   {...register("dwellingType")}
                   className="w-full bg-slate-900 border border-slate-800 rounded-xl px-3 py-2.5 text-xs text-slate-300 focus:border-teal-500 outline-none"
                 >
@@ -348,8 +350,9 @@ export default function OnboardingPage({ params }: { params: Promise<{ locale: s
               </div>
 
               <div className="space-y-2">
-                <label className="text-xs text-slate-300 font-semibold">Floor Level</label>
+                <label htmlFor="onboarding-floor-level" className="text-xs text-slate-300 font-semibold">Floor Level</label>
                 <input
+                  id="onboarding-floor-level"
                   type="number"
                   {...register("floorLevel", { valueAsNumber: true })}
                   placeholder="0 for Ground floor"
@@ -415,8 +418,9 @@ export default function OnboardingPage({ params }: { params: Promise<{ locale: s
             {/* Grid for members count */}
             <div className="grid grid-cols-3 gap-3">
               <div className="space-y-1">
-                <label className="text-[10px] text-slate-350 uppercase tracking-wider font-semibold">Adults</label>
+                <label htmlFor="onboarding-adults" className="text-[10px] text-slate-350 uppercase tracking-wider font-semibold">Adults</label>
                 <input
+                  id="onboarding-adults"
                   type="number"
                   {...register("adults", { valueAsNumber: true })}
                   className="w-full glass-input px-3 py-2 text-xs rounded-xl"
@@ -424,16 +428,18 @@ export default function OnboardingPage({ params }: { params: Promise<{ locale: s
                 {errors.adults && <span className="text-[9px] text-red-400">{errors.adults.message?.toString()}</span>}
               </div>
               <div className="space-y-1">
-                <label className="text-[10px] text-slate-350 uppercase tracking-wider font-semibold">Children</label>
+                <label htmlFor="onboarding-children" className="text-[10px] text-slate-350 uppercase tracking-wider font-semibold">Children</label>
                 <input
+                  id="onboarding-children"
                   type="number"
                   {...register("children", { valueAsNumber: true })}
                   className="w-full glass-input px-3 py-2 text-xs rounded-xl"
                 />
               </div>
               <div className="space-y-1">
-                <label className="text-[10px] text-slate-350 uppercase tracking-wider font-semibold">Elders</label>
+                <label htmlFor="onboarding-elders" className="text-[10px] text-slate-350 uppercase tracking-wider font-semibold">Elders</label>
                 <input
+                  id="onboarding-elders"
                   type="number"
                   {...register("olderAdults", { valueAsNumber: true })}
                   className="w-full glass-input px-3 py-2 text-xs rounded-xl"
@@ -497,8 +503,9 @@ export default function OnboardingPage({ params }: { params: Promise<{ locale: s
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-2">
-                <label className="text-xs text-slate-300 font-semibold">Available Household Vehicles</label>
+                <label htmlFor="onboarding-vehicle" className="text-xs text-slate-300 font-semibold">Available Household Vehicles</label>
                 <select
+                  id="onboarding-vehicle"
                   {...register("vehicleAvailable")}
                   className="w-full bg-slate-900 border border-slate-800 rounded-xl px-3 py-2.5 text-xs text-slate-300 focus:border-teal-500 outline-none"
                 >
@@ -509,8 +516,9 @@ export default function OnboardingPage({ params }: { params: Promise<{ locale: s
               </div>
 
               <div className="space-y-2">
-                <label className="text-xs text-slate-300 font-semibold">Preferred Transit Mode</label>
+                <label htmlFor="onboarding-travel-mode" className="text-xs text-slate-300 font-semibold">Preferred Transit Mode</label>
                 <select
+                  id="onboarding-travel-mode"
                   {...register("preferredTravelMode")}
                   className="w-full bg-slate-900 border border-slate-800 rounded-xl px-3 py-2.5 text-xs text-slate-300 focus:border-teal-500 outline-none"
                 >
@@ -522,8 +530,9 @@ export default function OnboardingPage({ params }: { params: Promise<{ locale: s
 
             {/* Language Selector inside onboarding */}
             <div className="space-y-2">
-              <label className="text-xs text-slate-300 font-semibold">Preferred App Language</label>
+              <label htmlFor="onboarding-language" className="text-xs text-slate-300 font-semibold">Preferred App Language</label>
               <select
+                id="onboarding-language"
                 {...register("preferredLanguage")}
                 className="w-full bg-slate-900 border border-slate-800 rounded-xl px-3 py-2.5 text-xs text-slate-300 focus:border-teal-500 outline-none"
               >

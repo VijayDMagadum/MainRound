@@ -211,8 +211,9 @@ export default function AlertsManager({ locale }: AlertsManagerProps) {
               </p>
 
               <div className="space-y-1.5">
-                <label className="text-[10px] text-slate-350 uppercase tracking-widest font-semibold">Hazard Type</label>
+                <label htmlFor="hazard-type-select" className="text-[10px] text-slate-350 uppercase tracking-widest font-semibold">Hazard Type</label>
                 <select
+                  id="hazard-type-select"
                   value={hazardType}
                   onChange={(e) => setHazardType(e.target.value)}
                   className="w-full bg-slate-900 border border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-300 outline-none"
@@ -227,8 +228,9 @@ export default function AlertsManager({ locale }: AlertsManagerProps) {
               </div>
 
               <div className="space-y-1.5">
-                <label className="text-[10px] text-slate-350 uppercase tracking-widest font-semibold">Estimated Severity</label>
+                <label htmlFor="hazard-severity-select" className="text-[10px] text-slate-350 uppercase tracking-widest font-semibold">Estimated Severity</label>
                 <select
+                  id="hazard-severity-select"
                   value={severity}
                   onChange={(e) => setSeverity(e.target.value)}
                   className="w-full bg-slate-900 border border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-300 outline-none"
@@ -241,8 +243,9 @@ export default function AlertsManager({ locale }: AlertsManagerProps) {
               </div>
 
               <div className="space-y-1.5">
-                <label className="text-[10px] text-slate-350 uppercase tracking-widest font-semibold">Location (Area/Chowk Name)</label>
+                <label htmlFor="hazard-location-input" className="text-[10px] text-slate-350 uppercase tracking-widest font-semibold">Location (Area/Chowk Name)</label>
                 <input
+                  id="hazard-location-input"
                   type="text"
                   required
                   value={locationName}
@@ -253,8 +256,9 @@ export default function AlertsManager({ locale }: AlertsManagerProps) {
               </div>
 
               <div className="space-y-1.5">
-                <label className="text-[10px] text-slate-350 uppercase tracking-widest font-semibold">Observation Description</label>
+                <label htmlFor="hazard-description-input" className="text-[10px] text-slate-350 uppercase tracking-widest font-semibold">Observation Description</label>
                 <textarea
+                  id="hazard-description-input"
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
                   placeholder="e.g. Water is rising fast. 3 stalled bikes. Avoid routes."

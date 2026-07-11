@@ -261,6 +261,7 @@ export default function ChecklistDashboard({ locale }: ChecklistDashboardProps) 
                           {item.isCustom && (
                             <button
                               onClick={() => handleDeleteItem(item.id)}
+                              aria-label="Delete custom task"
                               className="p-1 rounded bg-slate-950 hover:bg-slate-900 border border-slate-850 text-red-400 hover:text-red-300 transition-colors cursor-pointer"
                               title="Delete custom task"
                             >
@@ -284,8 +285,9 @@ export default function ChecklistDashboard({ locale }: ChecklistDashboardProps) 
               </h3>
               
               <div className="space-y-1.5">
-                <label className="text-[10px] text-slate-350 uppercase tracking-widest font-semibold">Task Name</label>
+                <label htmlFor="custom-task-title" className="text-[10px] text-slate-350 uppercase tracking-widest font-semibold">Task Name</label>
                 <input
+                  id="custom-task-title"
                   type="text"
                   required
                   value={newItemTitle}
@@ -296,8 +298,9 @@ export default function ChecklistDashboard({ locale }: ChecklistDashboardProps) 
               </div>
 
               <div className="space-y-1.5">
-                <label className="text-[10px] text-slate-350 uppercase tracking-widest font-semibold">Quantity / Supply</label>
+                <label htmlFor="custom-task-qty" className="text-[10px] text-slate-350 uppercase tracking-widest font-semibold">Quantity / Supply</label>
                 <input
+                  id="custom-task-qty"
                   type="text"
                   value={newItemQuantity}
                   onChange={(e) => setNewItemQuantity(e.target.value)}
@@ -307,8 +310,9 @@ export default function ChecklistDashboard({ locale }: ChecklistDashboardProps) 
               </div>
 
               <div className="space-y-1.5">
-                <label className="text-[10px] text-slate-350 uppercase tracking-widest font-semibold">Category Group</label>
+                <label htmlFor="custom-task-cat" className="text-[10px] text-slate-350 uppercase tracking-widest font-semibold">Category Group</label>
                 <select
+                  id="custom-task-cat"
                   value={newItemCategory}
                   onChange={(e) => setNewItemCategory(e.target.value)}
                   className="w-full bg-slate-900 border border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-350 outline-none focus:border-teal-500"

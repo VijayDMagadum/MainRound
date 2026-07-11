@@ -84,6 +84,7 @@ export default function HeaderControls({ locale }: HeaderControlsProps) {
       <div className="relative">
         <button
           onClick={() => setShowLangMenu(!showLangMenu)}
+          aria-label="Toggle language menu"
           className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold bg-slate-900 border border-slate-800 hover:border-slate-700 hover:bg-slate-850 rounded-xl transition-all cursor-pointer"
           title="Change language"
         >
@@ -124,6 +125,7 @@ export default function HeaderControls({ locale }: HeaderControlsProps) {
       {/* Reset Session / Wipe Data Button */}
       <button
         onClick={() => setShowWipeConfirm(true)}
+        aria-label="Wipe session and profile data"
         className="flex items-center justify-center p-2 rounded-xl text-slate-400 hover:text-red-400 hover:bg-slate-900/50 border border-transparent hover:border-slate-800/80 transition-all cursor-pointer"
         title="Wipe all data"
       >

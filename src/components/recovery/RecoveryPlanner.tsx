@@ -93,8 +93,9 @@ export default function RecoveryPlanner({ household, locale }: RecoveryPlannerPr
         </p>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <label className="flex items-start gap-3 p-3.5 bg-slate-950/45 border border-slate-900 hover:border-slate-800/80 rounded-xl transition-all cursor-pointer">
+          <label htmlFor="flooding-inside-chk" className="flex items-start gap-3 p-3.5 bg-slate-950/45 border border-slate-900 hover:border-slate-800/80 rounded-xl transition-all cursor-pointer">
             <input
+              id="flooding-inside-chk"
               type="checkbox"
               checked={observedIssues.floodingInside}
               onChange={() => handleCheckboxChange("floodingInside")}
@@ -106,8 +107,9 @@ export default function RecoveryPlanner({ household, locale }: RecoveryPlannerPr
             </div>
           </label>
 
-          <label className="flex items-start gap-3 p-3.5 bg-slate-950/45 border border-slate-900 hover:border-slate-800/80 rounded-xl transition-all cursor-pointer">
+          <label htmlFor="wet-outlets-chk" className="flex items-start gap-3 p-3.5 bg-slate-950/45 border border-slate-900 hover:border-slate-800/80 rounded-xl transition-all cursor-pointer">
             <input
+              id="wet-outlets-chk"
               type="checkbox"
               checked={observedIssues.wetOutlets}
               onChange={() => handleCheckboxChange("wetOutlets")}
@@ -119,8 +121,9 @@ export default function RecoveryPlanner({ household, locale }: RecoveryPlannerPr
             </div>
           </label>
 
-          <label className="flex items-start gap-3 p-3.5 bg-slate-950/45 border border-slate-900 hover:border-slate-800/80 rounded-xl transition-all cursor-pointer">
+          <label htmlFor="dirty-water-chk" className="flex items-start gap-3 p-3.5 bg-slate-950/45 border border-slate-900 hover:border-slate-800/80 rounded-xl transition-all cursor-pointer">
             <input
+              id="dirty-water-chk"
               type="checkbox"
               checked={observedIssues.dirtyWater}
               onChange={() => handleCheckboxChange("dirtyWater")}
@@ -132,8 +135,9 @@ export default function RecoveryPlanner({ household, locale }: RecoveryPlannerPr
             </div>
           </label>
 
-          <label className="flex items-start gap-3 p-3.5 bg-slate-950/45 border border-slate-900 hover:border-slate-800/80 rounded-xl transition-all cursor-pointer">
+          <label htmlFor="structural-damage-chk" className="flex items-start gap-3 p-3.5 bg-slate-950/45 border border-slate-900 hover:border-slate-800/80 rounded-xl transition-all cursor-pointer">
             <input
+              id="structural-damage-chk"
               type="checkbox"
               checked={observedIssues.structuralDamage}
               onChange={() => handleCheckboxChange("structuralDamage")}
