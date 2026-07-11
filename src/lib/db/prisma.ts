@@ -2,9 +2,11 @@ import fs from "fs";
 import path from "path";
 
 // Locate a writeable database path
+const workerId = process.env.VITEST_WORKER_ID || "";
+const suffix = workerId ? `_test_worker_${workerId}` : "";
 const DB_FILE = process.env.NODE_ENV === "production"
-  ? path.join("/tmp", "monsoon_saathi_db.json")
-  : path.join(process.cwd(), "monsoon_saathi_db.json");
+  ? path.join("/tmp", `monsoon_saathi_db${suffix}.json`)
+  : path.join(process.cwd(), `monsoon_saathi_db${suffix}.json`);
 
 // Define the database shape
 interface DBState {
@@ -153,6 +155,15 @@ class Collection {
     for (const key of Object.keys(where)) {
       const val = where[key];
       if (val === undefined) continue;
+
+      // Handle compound keys like sessionId_alertId
+      if (key.includes("_") && typeof val === "object" && val !== null) {
+        for (const subKey of Object.keys(val)) {
+          if (item[subKey] !== val[subKey]) return false;
+        }
+        continue;
+      }
+
       if (typeof val === "object" && val !== null) {
         if (Array.isArray(val.in)) {
           if (!val.in.includes(item[key])) return false;

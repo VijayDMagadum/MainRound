@@ -1,0 +1,131 @@
+{
+  "userSession": [],
+  "householdProfile": [
+    {
+      "id": "f53d6e90-5fc8-48f7-858c-a299e6483ed2",
+      "createdAt": "2026-07-11T07:54:09.955Z",
+      "updatedAt": "2026-07-11T07:54:09.955Z",
+      "sessionId": "ba85edef-552a-4529-8b3c-f2614f1eced5",
+      "dwellingType": "apartment",
+      "floorLevel": 0,
+      "waterloggingProne": false,
+      "nearHazardSource": false,
+      "hasUpperFloor": false,
+      "adults": 1,
+      "children": 0,
+      "olderAdults": 0,
+      "pets": false,
+      "accessibilityNeeds": false,
+      "medicalPowerDependent": false,
+      "vehicleAvailable": "none",
+      "preferredTravelMode": "public",
+      "emergencyContacts": "[]",
+      "preferredLanguage": "en"
+    }
+  ],
+  "savedLocation": [
+    {
+      "id": "aeefb66b-b814-4b45-854e-335b9066db2f",
+      "createdAt": "2026-07-11T07:54:10.021Z",
+      "updatedAt": "2026-07-11T07:54:10.021Z",
+      "sessionId": "ba85edef-552a-4529-8b3c-f2614f1eced5",
+      "name": "Pune",
+      "latitude": 18.551391187644075,
+      "longitude": 73.79395604472107,
+      "isPrimary": true
+    }
+  ],
+  "preparednessPlan": [],
+  "preparednessTask": [],
+  "checklistItem": [
+    {
+      "id": "b590c2ce-7361-40a3-988b-e4589759ee58",
+      "createdAt": "2026-07-11T07:54:23.658Z",
+      "updatedAt": "2026-07-11T07:54:23.658Z",
+      "sessionId": "ba85edef-552a-4529-8b3c-f2614f1eced5",
+      "category": "water",
+      "title": "Drinking Water",
+      "description": "Clean water stored in closed containers (3 liters per person per day for 3 days).",
+      "quantity": "9 Liters",
+      "isRequired": true,
+      "position": 0
+    },
+    {
+      "id": "6cbb5207-af45-41e0-a85b-e3ba5798a00c",
+      "createdAt": "2026-07-11T07:54:23.658Z",
+      "updatedAt": "2026-07-11T07:54:23.658Z",
+      "sessionId": "ba85edef-552a-4529-8b3c-f2614f1eced5",
+      "category": "food",
+      "title": "Non-Perishable Food",
+      "description": "Ready-to-eat foods like dry snacks, energy bars, biscuits, and roasted grains.",
+      "quantity": "3-day supply",
+      "isRequired": true,
+      "position": 1
+    },
+    {
+      "id": "f46bf378-688f-498e-8fa1-8d541070f4e9",
+      "createdAt": "2026-07-11T07:54:23.659Z",
+      "updatedAt": "2026-07-11T07:54:23.659Z",
+      "sessionId": "ba85edef-552a-4529-8b3c-f2614f1eced5",
+      "category": "medicine",
+      "title": "Essential Medicines & First Aid",
+      "description": "Prescription medications, pain relievers, bandages, sanitizers, and ORS packets.",
+      "quantity": "1 Kit",
+      "isRequired": true,
+      "position": 2
+    },
+    {
+      "id": "b217aa1d-5010-42ff-ab2f-3450586765d7",
+      "createdAt": "2026-07-11T07:54:23.659Z",
+      "updatedAt": "2026-07-11T07:54:23.659Z",
+      "sessionId": "ba85edef-552a-4529-8b3c-f2614f1eced5",
+      "category": "lighting",
+      "title": "Emergency Torch & Spare Batteries",
+      "description": "Check bulb functionality. Store in a known, reachable dry spot.",
+      "quantity": "2 Units",
+      "isRequired": true,
+      "position": 3
+    },
+    {
+      "id": "d74bdb9a-98e6-4660-a86b-8e3eb491c67d",
+      "createdAt": "2026-07-11T07:54:23.659Z",
+      "updatedAt": "2026-07-11T07:54:23.659Z",
+      "sessionId": "ba85edef-552a-4529-8b3c-f2614f1eced5",
+      "category": "communication",
+      "title": "Power Banks & Emergency Radios",
+      "description": "Charge power banks to 100% capacity and preserve phone battery.",
+      "quantity": "1-2 Units",
+      "isRequired": true,
+      "position": 4
+    },
+    {
+      "id": "68dcc682-61cd-4859-a853-8362eda140f2",
+      "createdAt": "2026-07-11T07:54:23.659Z",
+      "updatedAt": "2026-07-11T07:54:23.659Z",
+      "sessionId": "ba85edef-552a-4529-8b3c-f2614f1eced5",
+      "category": "documents",
+      "title": "Waterproof Go-Bag for Documents",
+      "description": "Keep Aadhar/IDs, insurance files, house deeds, and liquid cash in a zipper lock pouch.",
+      "quantity": "1 Bag",
+      "isRequired": true,
+      "position": 5
+    }
+  ],
+  "weatherSnapshot": [],
+  "riskAssessment": [],
+  "alertAcknowledgement": [
+    {
+      "id": "7deb7f97-dc62-4527-95ee-a4c094f12a0f",
+      "createdAt": "2026-07-11T07:53:55.917Z",
+      "updatedAt": "2026-07-11T07:53:55.917Z",
+      "sessionId": "6616e58c-92c7-4703-baaf-be5bb414473a",
+      "alertId": "alert-123"
+    }
+  ],
+  "travelAdvisory": [],
+  "emergencyContact": [],
+  "communityPlan": [],
+  "pushSubscription": [],
+  "userObservation": [],
+  "alert": []
+}

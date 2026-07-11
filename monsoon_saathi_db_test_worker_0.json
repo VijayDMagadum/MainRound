@@ -1,0 +1,25 @@
+{
+  "userSession": [],
+  "householdProfile": [],
+  "savedLocation": [],
+  "preparednessPlan": [],
+  "preparednessTask": [],
+  "checklistItem": [],
+  "weatherSnapshot": [],
+  "riskAssessment": [],
+  "alertAcknowledgement": [
+    {
+      "id": "15e41406-6b11-4181-a47e-1e5714a12246",
+      "createdAt": "2026-07-11T07:54:11.657Z",
+      "updatedAt": "2026-07-11T07:54:11.657Z",
+      "sessionId": "e0870da7-8c04-4cb0-92d2-05e9f167955c",
+      "alertId": "alert-123"
+    }
+  ],
+  "travelAdvisory": [],
+  "emergencyContact": [],
+  "communityPlan": [],
+  "pushSubscription": [],
+  "userObservation": [],
+  "alert": []
+}

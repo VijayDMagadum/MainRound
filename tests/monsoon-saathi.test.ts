@@ -4,6 +4,7 @@ import { createAISafeProfile } from "../src/lib/privacy/create-ai-safe-profile";
 import { parseAndValidate, extractJSON } from "../src/lib/ai/response-parser";
 import { PreparednessPlanResponseSchema } from "../src/lib/ai/schemas";
 import { WeatherForecastResponse } from "../src/lib/weather/types";
+import { prisma } from "../src/lib/db/prisma";
 
 // Mock Weather Forecast Builder
 function createMockForecast(overrides: Partial<WeatherForecastResponse> = {}): WeatherForecastResponse {
@@ -219,5 +220,61 @@ describe("Response Parser & Validation", () => {
     const parsed = parseAndValidate(mockPlanText, PreparednessPlanResponseSchema);
     expect(parsed.riskSummary.level).toBe("high");
     expect(parsed.immediateActions[0].title).toBe("Charge phone");
+  });
+});
+
+describe("Emulated JSON Database Client", () => {
+  it("should perform basic CRUD operations successfully", async () => {
+    // 1. Create session
+    const session = await prisma.userSession.create({ data: {} });
+    expect(session.id).toBeDefined();
+
+    // 2. Find unique
+    const foundSession = await prisma.userSession.findUnique({ where: { id: session.id } });
+    expect(foundSession).not.toBeNull();
+    expect(foundSession.id).toBe(session.id);
+
+    // 3. Create checklist items
+    const item1 = await prisma.checklistItem.create({
+      data: {
+        sessionId: session.id,
+        title: "Test Bottled Water",
+        category: "water",
+        isCompleted: false
+      }
+    });
+    expect(item1.id).toBeDefined();
+    expect(item1.title).toBe("Test Bottled Water");
+
+    // 4. Update item
+    const updated = await prisma.checklistItem.update({
+      where: { id: item1.id },
+      data: { isCompleted: true }
+    });
+    expect(updated.isCompleted).toBe(true);
+
+    // 5. Upsert compound key
+    const ack1 = await prisma.alertAcknowledgement.upsert({
+      where: {
+        sessionId_alertId: { sessionId: session.id, alertId: "alert-123" }
+      },
+      create: { sessionId: session.id, alertId: "alert-123" },
+      update: {}
+    });
+    expect(ack1.id).toBeDefined();
+    expect(ack1.alertId).toBe("alert-123");
+
+    // 6. Find list
+    const items = await prisma.checklistItem.findMany({ where: { sessionId: session.id } });
+    expect(items.length).toBe(1);
+    expect(items[0].title).toBe("Test Bottled Water");
+
+    // 7. Delete checklist item
+    await prisma.checklistItem.delete({ where: { id: item1.id } });
+    const itemsAfter = await prisma.checklistItem.findMany({ where: { sessionId: session.id } });
+    expect(itemsAfter.length).toBe(0);
+
+    // Clean up session
+    await prisma.userSession.delete({ where: { id: session.id } });
   });
 });
