@@ -26,10 +26,10 @@ export async function GET(req: NextRequest) {
       where: { sessionId }
     });
     
-    const acknowledgedIds = new Set(acknowledgements.map(a => a.alertId));
+    const acknowledgedIds = new Set(acknowledgements.map((a: any) => a.alertId));
 
     return NextResponse.json({
-      systemAlerts: systemAlerts.map(alert => ({
+      systemAlerts: systemAlerts.map((alert: any) => ({
         ...alert,
         acknowledged: acknowledgedIds.has(alert.id)
       })),

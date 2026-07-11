@@ -4,9 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "postinstall": "prisma generate",
-    "vercel-build": "prisma generate && prisma migrate deploy && next build",
-    "build": "prisma generate && prisma migrate deploy && next build",
+    "build": "next build",
     "start": "next start",
     "lint": "next lint",
     "test": "vitest run",
@@ -15,7 +13,6 @@
   },
   "dependencies": {
     "@hookform/resolvers": "^5.4.0",
-    "@prisma/client": "^5.22.0",
     "clsx": "^2.1.1",
     "lucide-react": "^1.24.0",
     "next": "16.2.10",
@@ -25,8 +22,7 @@
     "recharts": "^3.9.2",
     "tailwind-merge": "^3.6.0",
     "web-push": "^3.6.7",
-    "zod": "^4.4.3",
-    "prisma": "^5.22.0"
+    "zod": "^4.4.3"
   },
   "devDependencies": {
     "@playwright/test": "^1.61.1",
