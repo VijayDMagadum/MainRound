@@ -13,6 +13,7 @@ export default async function PreparednessPage({ params }: PageProps) {
 
   let profile = null;
   let forecast = null;
+  let locations: any[] = [];
 
   try {
     profile = await prisma.householdProfile.findUnique({
@@ -25,6 +26,12 @@ export default async function PreparednessPage({ params }: PageProps) {
     if (primaryLocation) {
       forecast = await getForecast(primaryLocation.latitude, primaryLocation.longitude);
     }
+
+    // Load all saved locations for switcher
+    locations = await prisma.savedLocation.findMany({
+      where: { sessionId },
+      orderBy: { isPrimary: "desc" }
+    });
   } catch (e) {
     console.error("Database connection failure in preparedness loading:", e);
   }
@@ -42,6 +49,7 @@ export default async function PreparednessPage({ params }: PageProps) {
         household={profile}
         forecast={forecast}
         locale={locale}
+        locations={locations || []}
       />
     </div>
   );
