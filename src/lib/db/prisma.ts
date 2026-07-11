@@ -142,7 +142,8 @@ async function setStore(key: string, data: any[]) {
       path: "/",
       sameSite: "lax",
       maxAge: 60 * 60 * 24 * 365,
-      httpOnly: false
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production"
     });
   } catch (e) {
     // Fallback to file db during build-time static rendering

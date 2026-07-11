@@ -1,5 +1,6 @@
 import { getSessionId } from "@/lib/db/session";
 import { prisma } from "@/lib/db/prisma";
+import { publicErrorResponse } from "@/lib/security/api";
 import { NextRequest, NextResponse } from "next/server";
 
 export const dynamic = "force-dynamic";
@@ -33,6 +34,6 @@ export async function GET(req: NextRequest) {
     return NextResponse.json(fullSessionData);
   } catch (error: any) {
     console.error("[API/Profile/Export] Error exporting data:", error);
-    return NextResponse.json({ error: "Internal Server Error", details: error.message }, { status: 500 });
+    return publicErrorResponse("Internal Server Error", 500, error);
   }
 }

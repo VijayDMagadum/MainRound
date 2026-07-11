@@ -1,5 +1,7 @@
 import { getSessionId } from "@/lib/db/session";
 import { prisma } from "@/lib/db/prisma";
+import { publicErrorResponse } from "@/lib/security/api";
+import { sanitizeText } from "@/lib/security/input";
 import { NextRequest, NextResponse } from "next/server";
 
 export const dynamic = "force-dynamic";
@@ -16,7 +18,7 @@ export async function GET(req: NextRequest) {
     return NextResponse.json(locations);
   } catch (error: any) {
     console.error("[API/Locations/GET] Error:", error);
-    return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
+    return publicErrorResponse("Internal Server Error", 500, error);
   }
 }
 
@@ -24,8 +26,11 @@ export async function POST(req: NextRequest) {
   try {
     const sessionId = await getSessionId();
     const body = await req.json();
+    const name = sanitizeText(body.name, 120);
+    const latitude = Number(body.latitude);
+    const longitude = Number(body.longitude);
 
-    if (!body.name || body.latitude === undefined || body.longitude === undefined) {
+    if (!name || !Number.isFinite(latitude) || !Number.isFinite(longitude) || latitude < -90 || latitude > 90 || longitude < -180 || longitude > 180) {
       return NextResponse.json({ error: "name, latitude, and longitude are required" }, { status: 400 });
     }
 
@@ -40,9 +45,9 @@ export async function POST(req: NextRequest) {
     const location = await prisma.savedLocation.create({
       data: {
         sessionId,
-        name: body.name,
-        latitude: parseFloat(body.latitude),
-        longitude: parseFloat(body.longitude),
+        name,
+        latitude,
+        longitude,
         isPrimary: !!body.isPrimary,
       },
     });
@@ -50,7 +55,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json(location);
   } catch (error: any) {
     console.error("[API/Locations/POST] Error creating location:", error);
-    return NextResponse.json({ error: "Internal Server Error", details: error.message }, { status: 500 });
+    return publicErrorResponse("Internal Server Error", 500, error);
   }
 }
 
@@ -74,6 +79,6 @@ export async function DELETE(req: NextRequest) {
     return NextResponse.json({ success: true });
   } catch (error: any) {
     console.error("[API/Locations/DELETE] Error:", error);
-    return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
+    return publicErrorResponse("Internal Server Error", 500, error);
   }
 }

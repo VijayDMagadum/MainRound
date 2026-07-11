@@ -1,28 +1,33 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { 
-  CloudRain, 
   AlertTriangle, 
   CheckSquare, 
   Printer, 
-  Download, 
   Copy, 
   RefreshCw, 
   Clock, 
   ShieldCheck, 
   Info,
-  ChevronDown,
-  UserCheck,
   MapPin,
   Loader2
 } from "lucide-react";
+import type { ActionItem, PreparednessPlanResponse } from "@/lib/ai/schemas";
+
+interface PreparednessLocation {
+  id: string;
+  name: string;
+  latitude: number;
+  longitude: number;
+  isPrimary?: boolean;
+}
 
 interface PreparednessPlanViewProps {
-  household: any;
-  forecast: any;
+  household: unknown;
+  forecast: unknown;
   locale: string;
-  locations: any[];
+  locations: PreparednessLocation[];
 }
 
 export default function PreparednessPlanView({
@@ -32,13 +37,15 @@ export default function PreparednessPlanView({
   locations = []
 }: PreparednessPlanViewProps) {
   const [selectedLocId, setSelectedLocId] = useState("");
-  const [plan, setPlan] = useState<any | null>(null);
+  const [plan, setPlan] = useState<PreparednessPlanResponse | null>(null);
   const [loading, setLoading] = useState(false);
   const [completedActions, setCompletedActions] = useState<Record<string, boolean>>({});
+  const [statusMessage, setStatusMessage] = useState("");
 
   // Load / Fetch plan details
-  const fetchPlan = async (locId: string, locForecast: any) => {
+  const fetchPlan = async (locId: string, locForecast: unknown) => {
     setLoading(true);
+    setStatusMessage("");
     try {
       const res = await fetch("/api/ai/preparedness-plan", {
         method: "POST",
@@ -54,19 +61,19 @@ export default function PreparednessPlanView({
         throw new Error("Failed to fetch plan");
       }
 
-      const data = await res.json();
+      const data = await res.json() as PreparednessPlanResponse;
       setPlan(data);
       localStorage.setItem(`preparednessPlan_${locId}`, JSON.stringify(data));
     } catch (err) {
       console.error(err);
-      alert("Error compiling AI plan. Displaying local deterministic backups.");
+      setStatusMessage("Could not refresh the AI plan. Showing the latest locally cached or rules-based safety guidance.");
     } finally {
       setLoading(false);
     }
   };
 
   // Get forecast and make API call
-  const getForecastAndPlan = async (locId: string, initialForecastObj?: any) => {
+  const getForecastAndPlan = async (locId: string, initialForecastObj?: unknown) => {
     setLoading(true);
     setPlan(null);
     try {
@@ -92,7 +99,7 @@ export default function PreparednessPlanView({
   };
 
   // Load / Fetch plan details
-  const loadPlanForLocation = async (locId: string, initialForecastObj?: any) => {
+  const loadPlanForLocation = async (locId: string, initialForecastObj?: unknown) => {
     const cached = localStorage.getItem(`preparednessPlan_${locId}`);
     const cachedCompleted = localStorage.getItem(`preparednessPlanCompleted_${locId}`);
     
@@ -108,7 +115,7 @@ export default function PreparednessPlanView({
 
     if (cached) {
       try {
-        setPlan(JSON.parse(cached));
+        setPlan(JSON.parse(cached) as PreparednessPlanResponse);
       } catch (e) {
         await getForecastAndPlan(locId, initialForecastObj);
       }
@@ -164,7 +171,7 @@ export default function PreparednessPlanView({
       `Explanation: ${plan.riskSummary.explanation}`,
       "",
       "CRITICAL IMMEDIATE ACTIONS:",
-      ...plan.immediateActions.map((act: any) => `- [${completedActions[act.id] ? "x" : " "}] ${act.title}: ${act.description}`),
+      ...plan.immediateActions.map((act) => `- [${completedActions[act.id] ? "x" : " "}] ${act.title}: ${act.description}`),
       "",
       "THINGS TO AVOID:",
       ...plan.avoid.map((av: string) => `- ${av}`)
@@ -189,7 +196,7 @@ export default function PreparednessPlanView({
   const currentRiskColor = plan ? (riskColors[plan.riskSummary.level] || riskColors.low) : "";
 
   // Action checklist builder
-  const renderActionList = (title: string, list: any[]) => {
+  const renderActionList = (title: string, list: ActionItem[]) => {
     if (!list || list.length === 0) return null;
     return (
       <div className="glass-card rounded-2xl p-6 space-y-4">
@@ -305,6 +312,12 @@ export default function PreparednessPlanView({
         </div>
       )}
 
+      {statusMessage && (
+        <div className="bg-amber-950/20 border border-amber-900/40 text-amber-300 p-3 rounded-2xl text-xs">
+          {statusMessage}
+        </div>
+      )}
+
       {/* Main summary grid */}
       {!loading && plan && (
         <div className="space-y-6">
@@ -328,6 +341,32 @@ export default function PreparednessPlanView({
             </div>
           </div>
 
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {[
+              {
+                phase: "Before",
+                title: "Prepare the household",
+                count: plan.beforeRain.length + plan.supplies.length + plan.homePreparation.length,
+              },
+              {
+                phase: "During",
+                title: "Act on alerts and avoid hazards",
+                count: plan.immediateActions.length + plan.travel.length + plan.evacuationReadiness.length,
+              },
+              {
+                phase: "After",
+                title: "Recover without secondary injury",
+                count: plan.afterEvent.length,
+              },
+            ].map((item) => (
+              <div key={item.phase} className="glass-card rounded-2xl border border-slate-900 p-4">
+                <span className="text-[10px] uppercase font-bold tracking-widest text-teal-400">{item.phase}</span>
+                <h3 className="text-sm font-bold text-slate-100 mt-1">{item.title}</h3>
+                <p className="text-[10px] text-slate-500 mt-1">{item.count} plan actions linked to this phase.</p>
+              </div>
+            ))}
+          </div>
+
           {/* Action Sections */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {renderActionList("Immediate Safety Measures", plan.immediateActions)}
@@ -340,6 +379,7 @@ export default function PreparednessPlanView({
             {plan.pets && plan.pets.length > 0 && renderActionList("Pet Safety", plan.pets)}
             {plan.evacuationReadiness && plan.evacuationReadiness.length > 0 && renderActionList("Evacuation Go-Bag", plan.evacuationReadiness)}
             {plan.communityActions && plan.communityActions.length > 0 && renderActionList("Neighborhood/Society Actions", plan.communityActions)}
+            {plan.afterEvent && plan.afterEvent.length > 0 && renderActionList("After-event Recovery Checks", plan.afterEvent)}
           </div>
 
           {/* Things to avoid */}
@@ -350,7 +390,7 @@ export default function PreparednessPlanView({
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs text-slate-400 leading-relaxed">
               {plan.avoid.map((item: string, idx: number) => (
                 <div key={idx} className="flex gap-2 items-start bg-slate-950/30 border border-red-950/20 p-3 rounded-xl">
-                  <span className="text-red-400 font-bold">•</span>
+                  <span className="text-red-400 font-bold" aria-hidden="true">!</span>
                   <span>{item}</span>
                 </div>
               ))}

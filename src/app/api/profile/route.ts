@@ -1,5 +1,7 @@
 import { getSessionId, clearSession } from "@/lib/db/session";
 import { prisma } from "@/lib/db/prisma";
+import { publicErrorResponse } from "@/lib/security/api";
+import { sanitizeHouseholdProfileInput } from "@/lib/security/input";
 import { NextRequest, NextResponse } from "next/server";
 
 export const dynamic = "force-dynamic";
@@ -15,7 +17,7 @@ export async function GET(req: NextRequest) {
     return NextResponse.json(profile || null);
   } catch (error: any) {
     console.error("[API/Profile/GET] Error:", error);
-    return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
+    return publicErrorResponse("Internal Server Error", 500, error);
   }
 }
 
@@ -23,26 +25,7 @@ export async function POST(req: NextRequest) {
   try {
     const sessionId = await getSessionId();
     const body = await req.json();
-    
-    const profileData = {
-      dwellingType: body.dwellingType || "apartment",
-      floorLevel: parseInt(body.floorLevel || "0"),
-      waterloggingProne: !!body.waterloggingProne,
-      nearHazardSource: !!body.nearHazardSource,
-      hasUpperFloor: !!body.hasUpperFloor,
-      adults: parseInt(body.adults || "1"),
-      children: parseInt(body.children || "0"),
-      olderAdults: parseInt(body.olderAdults || "0"),
-      pets: !!body.pets,
-      accessibilityNeeds: !!body.accessibilityNeeds,
-      medicalPowerDependent: !!body.medicalPowerDependent,
-      vehicleAvailable: body.vehicleAvailable || "none",
-      preferredTravelMode: body.preferredTravelMode || "public",
-      emergencyContacts: typeof body.emergencyContacts === "string" 
-        ? body.emergencyContacts 
-        : JSON.stringify(body.emergencyContacts || []),
-      preferredLanguage: body.preferredLanguage || "en",
-    };
+    const profileData = sanitizeHouseholdProfileInput(body);
 
     const profile = await prisma.householdProfile.upsert({
       where: { sessionId },
@@ -56,7 +39,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json(profile);
   } catch (error: any) {
     console.error("[API/Profile/POST] Error saving profile:", error);
-    return NextResponse.json({ error: "Internal Server Error", details: error.message }, { status: 500 });
+    return publicErrorResponse("Internal Server Error", 500, error);
   }
 }
 
@@ -68,6 +51,6 @@ export async function DELETE(req: NextRequest) {
     return NextResponse.json({ success: true, message: "All local and server-side session data deleted successfully." });
   } catch (error: any) {
     console.error("[API/Profile/DELETE] Error deleting session data:", error);
-    return NextResponse.json({ error: "Internal Server Error", details: error.message }, { status: 500 });
+    return publicErrorResponse("Internal Server Error", 500, error);
   }
 }

@@ -1,32 +1,41 @@
+import { buildUntrustedJsonContext } from "@/lib/ai/context";
 import { callOpenRouter } from "@/lib/ai/openrouter";
 import { parseAndValidate } from "@/lib/ai/response-parser";
 import { AssistantResponseSchema } from "@/lib/ai/schemas";
 import { ASSISTANT_PROMPT } from "@/lib/ai/system-prompts";
 import { createAISafeProfile } from "@/lib/privacy/create-ai-safe-profile";
+import { getClientKey, checkRateLimit, publicErrorResponse, rateLimitResponse } from "@/lib/security/api";
+import { AIQuestionSchema, AssistantHistorySchema, normalizeLocale } from "@/lib/security/input";
 import { calculateRisk } from "@/lib/weather/risk-engine";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 
 const RequestSchema = z.object({
-  question: z.string(),
-  history: z.array(
-    z.object({
-      role: z.enum(["system", "user", "assistant"]),
-      content: z.string(),
-    })
-  ).default([]),
+  question: AIQuestionSchema,
+  history: AssistantHistorySchema,
   forecast: z.any().nullable(),
   household: z.any().nullable(),
-  locale: z.string().default("en"),
+  locale: z.preprocess((value) => normalizeLocale(value), z.enum(["en", "hi", "mr"])).default("en"),
 });
+
+export const dynamic = "force-dynamic";
+export const runtime = "nodejs";
 
 export async function POST(req: NextRequest) {
   console.log("[API/AI/Assistant] Processing conversation request");
-  
+
   try {
+    const rateLimit = checkRateLimit(getClientKey(req, "ai:assistant"), {
+      limit: 20,
+      windowMs: 60_000,
+    });
+    if (!rateLimit.allowed) {
+      return rateLimitResponse(rateLimit.retryAfterSeconds);
+    }
+
     const body = await req.json();
     const parsedRequest = RequestSchema.safeParse(body);
-    
+
     if (!parsedRequest.success) {
       return NextResponse.json(
         { error: "Invalid request payload", details: parsedRequest.error.format() },
@@ -35,41 +44,42 @@ export async function POST(req: NextRequest) {
     }
 
     const { question, history, forecast, household, locale } = parsedRequest.data;
-    
-    // Calculate risks and sanitize profile
     const riskAssessment = calculateRisk(forecast, household);
     const safeProfile = createAISafeProfile(household);
 
-    const contextText = `
-    Language requested: ${locale}
-    Household Profile: Dwelling: ${safeProfile.dwellingType}, Floor: ${safeProfile.floorLevel}, Waterlogging Prone: ${safeProfile.waterloggingProne}, Pets: ${safeProfile.pets}, Dependants: (Children: ${safeProfile.children}, Older: ${safeProfile.olderAdults}), Medical Power Dependent: ${safeProfile.medicalPowerDependent}
-    
-    Risk Level: ${riskAssessment.overall}
-    Hazards reasons: ${riskAssessment.reasons.join(" | ")}
+    const contextText = buildUntrustedJsonContext({
+      locale,
+      question,
+      householdProfile: safeProfile,
+      riskAssessment: {
+        overall: riskAssessment.overall,
+        travel: riskAssessment.travel,
+        powerDisruption: riskAssessment.powerDisruption,
+        flooding: riskAssessment.flooding,
+        reasons: riskAssessment.reasons,
+        recommendedActions: riskAssessment.recommendedActions,
+      },
+    });
 
-    User question: ${question}
-    `;
-
-    // Construct history with system prompt
     const messages = [
       { role: "system" as const, content: ASSISTANT_PROMPT },
-      ...history.slice(-6), // Send last 6 messages to keep context window light and clean
-      { role: "user" as const, content: contextText }
+      ...history.slice(-6),
+      { role: "user" as const, content: contextText },
     ];
 
     try {
       const aiResponse = await callOpenRouter(messages);
-      
+
       try {
         const validatedResponse = parseAndValidate(aiResponse, AssistantResponseSchema);
         return NextResponse.json(validatedResponse);
       } catch (validationErr: any) {
         console.warn("[API/AI/Assistant] Assistant response failed schema validation. Requesting correction.");
-        
+
         const repairMessages = [
           ...messages,
           { role: "assistant" as const, content: aiResponse },
-          { role: "user" as const, content: `Your previous response failed Zod schema check: ${validationErr.message}. Output ONLY valid repaired JSON.` }
+          { role: "user" as const, content: `Schema check failed: ${validationErr.message}. Output ONLY valid repaired JSON.` },
         ];
 
         const repairResponse = await callOpenRouter(repairMessages);
@@ -78,100 +88,84 @@ export async function POST(req: NextRequest) {
       }
     } catch (aiErr: any) {
       console.error("[API/AI/Assistant] AI service failed. Falling back to rules-based advice.", aiErr.message);
-      const fallbackResponse = generateDeterministicAssistantFallback(question, riskAssessment, safeProfile, locale);
-      return NextResponse.json(fallbackResponse);
+      return NextResponse.json(generateDeterministicAssistantFallback(question, riskAssessment, safeProfile));
     }
   } catch (error: any) {
     console.error("[API/AI/Assistant] Internal handler error:", error);
-    return NextResponse.json(
-      { error: "Internal Server Error", details: error.message },
-      { status: 500 }
-    );
+    return publicErrorResponse("Internal Server Error", 500, error);
   }
 }
 
-// Simple rules-based conversational fallback
-function generateDeterministicAssistantFallback(question: string, riskAssessment: any, profile: any, locale: string) {
+function generateDeterministicAssistantFallback(question: string, riskAssessment: any, profile: any) {
   const query = question.toLowerCase();
-  let answer = "";
-  let warning: string | undefined = undefined;
   const suggestedFollowUps = [
     "What should be in my emergency bag?",
     "What should I do during a power outage?",
     "How can I clean my house after flooding?",
-    "Is it safe to drive right now?"
+    "Is it safe to drive right now?",
   ];
 
-  if (riskAssessment.overall === "severe" || riskAssessment.overall === "high") {
-    warning = locale === "hi" 
-      ? "चेतावनी: आपके स्थान पर भारी मानसून जोखिम अनुमानित है। बाहरी यात्रा से बचें।" 
-      : locale === "mr"
-      ? "इशारा: आपल्या भागात जास्त पूर / वादळ धोका आहे. प्रवास करणे टाळा."
-      : "ALERT: High/Severe weather risks detected in your area. Follow instruction from local disaster teams.";
-  }
+  const warning = riskAssessment.overall === "severe" || riskAssessment.overall === "high"
+    ? "ALERT: High or severe weather risks are estimated for your area. Follow instructions from local disaster teams."
+    : undefined;
 
-  if (query.includes("bag") || query.includes("checklist") || query.includes("supply") || query.includes("सामग्री")) {
-    answer = `
-### Emergency Go-Bag Checklist
-Since the AI assistant is running in fallback mode, here is a list of essential items to pack immediately:
-1. **Documents**: Identification cards, property insurance files, and cash sealed in a waterproof plastic pouch.
-2. **First-Aid**: Antiseptic creams, bandages, and at least 7-10 days of personal prescription medications.
-3. **Power**: Fully charged power banks, a working torch (flashlight), and fresh spare batteries.
-4. **Food & Water**: 3 liters of clean drinking water per person and non-perishable food (dry fruits, energy bars, biscuits).
-5. **Hygiene**: Wet wipes, sanitizers, and basic sanitary products.
-    `;
-  } else if (query.includes("power") || query.includes("outage") || query.includes("electricity") || query.includes("बिजली")) {
-    answer = `
-### Power Outage Action Guide
-In case of power failures during storms:
-- **Save Battery**: Set mobile phones to 'Low Power Mode' and avoid unnecessary calls.
-- **Unplug Devices**: Unplug major appliances (refrigerators, ACs, TVs) to prevent damage from voltage surges when power returns.
-- **Lighting**: Use LED torches or candles. Place candles on stable, non-flammable surfaces away from curtains.
-- **Medical Equipment**: If a household member is dependent on powered medical equipment, immediately contact your pre-arranged backup help or move to a community shelter with generator backups.
-    `;
-  } else if (query.includes("clean") || query.includes("flood") || query.includes("house") || query.includes("बाढ़") || query.includes("पूर")) {
-    answer = `
-### Post-Flooding Safe Cleanup
-If floodwaters entered your home:
-1. **Electricity First**: Do not flip switches or touch plug sockets until an electrician has certified the walls and circuits are dry.
-2. **Safety Gear**: Wear thick rubber gloves and sturdy boots to protect against bacteria and injuries from hidden objects.
-3. **Discard Contaminated Items**: Throw out any food, medicines, or cosmetics that touched floodwater. Discard porous items like mattresses or fiber carpets.
-4. **Disinfect**: Clean all walls, solid floors, and metal furniture with a bleach-based solution to prevent toxic mold growth.
-    `;
-  } else if (query.includes("travel") || query.includes("drive") || query.includes("road") || query.includes("यात्रा") || query.includes("प्रवास")) {
+  let answer: string;
+
+  if (query.includes("bag") || query.includes("checklist") || query.includes("supply")) {
+    const people = Math.max(1, profile.adults + profile.children + profile.olderAdults);
+    answer = [
+      "### Emergency Go-Bag Checklist",
+      `Pack for at least ${people} household member${people === 1 ? "" : "s"}.`,
+      "1. Documents: IDs, insurance files, emergency cash, and prescriptions in a waterproof pouch.",
+      "2. First aid: antiseptic, bandages, ORS, and 7-10 days of personal medicines.",
+      "3. Power: charged power banks, torch, spare batteries, and charging cables.",
+      `4. Food and water: ${people * 3 * 3} liters of water plus dry ready-to-eat food for 72 hours.`,
+      "5. Hygiene: sanitizer, soap, wet wipes, sanitary products, and garbage bags.",
+    ].join("\n");
+  } else if (query.includes("power") || query.includes("outage") || query.includes("electricity")) {
+    answer = [
+      "### Power Outage Action Guide",
+      "- Put phones on low-power mode and preserve battery for emergency calls.",
+      "- Unplug major appliances to reduce surge damage when power returns.",
+      "- Use torches or LED lanterns instead of open flames where possible.",
+      "- If powered medical equipment is needed, move early to a generator-backed location or pre-arranged caregiver support.",
+    ].join("\n");
+  } else if (query.includes("clean") || query.includes("flood") || query.includes("house")) {
+    answer = [
+      "### Post-Flooding Safe Cleanup",
+      "1. Do not touch switches or sockets until electrical points are dry and inspected.",
+      "2. Wear rubber gloves and sturdy boots before entering flood-affected rooms.",
+      "3. Discard food, medicines, cosmetics, mattresses, and porous carpets touched by floodwater.",
+      "4. Wash hard surfaces with soap and clean water, then disinfect to reduce mold and infection risk.",
+    ].join("\n");
+  } else if (query.includes("travel") || query.includes("drive") || query.includes("road")) {
     const status = riskAssessment.travel === "severe" || riskAssessment.travel === "high"
-      ? "highly hazardous. Please postpone travel."
-      : "moderately safe. Travel with extreme vigilance.";
-    
-    answer = `
-### Route Travel Advisory
-Your estimated travel risk is **${riskAssessment.travel.toUpperCase()}**.
-Transit is currently **${status}**
+      ? "highly hazardous. Postpone non-essential travel."
+      : "manageable with caution. Recheck conditions before leaving.";
 
-Key precautions:
-- Do not drive or walk through stagnant pools; 15cm (6 inches) of water can cause car engine stalling or loss of steering control.
-- Avoid underpasses and flyovers which accumulate run-off.
-- Watch out for tree branches, weak boards, and dangling wires.
-    `;
+    answer = [
+      "### Route Travel Advisory",
+      `Estimated travel risk: ${riskAssessment.travel.toUpperCase()}.`,
+      `Transit is currently ${status}`,
+      "- Avoid underpasses, waterlogged flyovers, and roads with hidden potholes.",
+      "- Do not walk or drive through moving water.",
+      "- Watch for tree branches, loose boards, and dangling wires.",
+    ].join("\n");
   } else {
-    answer = `
-### Monsoon Safety Guidance (AI Offline)
-Hello! I am operating in fallback mode because the OpenRouter service is currently unreachable.
-
-Based on your local weather and profile details:
-- **Overall Risk Level**: ${riskAssessment.overall.toUpperCase()}
-- **Key Warnings**: ${riskAssessment.reasons.join(". ") || "Standard seasonal weather."}
-
-**Immediate Actions Recommended:**
-${riskAssessment.recommendedActions.map((act: string) => `- ${act}`).join("\n")}
-
-Feel free to ask about emergency checklists, power outage safety, travel planning, or home cleaning.
-    `;
+    answer = [
+      "### Monsoon Safety Guidance",
+      "The AI provider is unavailable, so this rules-based answer uses your app risk assessment.",
+      `Overall risk level: ${riskAssessment.overall.toUpperCase()}.`,
+      `Key warnings: ${riskAssessment.reasons.join(". ") || "Standard seasonal weather."}`,
+      "",
+      "Immediate actions:",
+      ...riskAssessment.recommendedActions.map((action: string) => `- ${action}`),
+    ].join("\n");
   }
 
   return {
     answer,
     warning,
-    suggestedFollowUps
+    suggestedFollowUps,
   };
 }

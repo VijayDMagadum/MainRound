@@ -1,5 +1,7 @@
 import { getSessionId } from "@/lib/db/session";
 import { prisma } from "@/lib/db/prisma";
+import { getClientKey, checkRateLimit, publicErrorResponse, rateLimitResponse } from "@/lib/security/api";
+import { CitizenObservationSchema, sanitizeText } from "@/lib/security/input";
 import { NextRequest, NextResponse } from "next/server";
 
 export const dynamic = "force-dynamic";
@@ -37,35 +39,48 @@ export async function GET(req: NextRequest) {
     });
   } catch (error: any) {
     console.error("[API/Alerts/GET] Error:", error);
-    return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
+    return publicErrorResponse("Internal Server Error", 500, error);
   }
 }
 
 export async function POST(req: NextRequest) {
   try {
-    const sessionId = await getSessionId();
-    const body = await req.json();
-
-    if (!body.hazardType || !body.severity || !body.location) {
-      return NextResponse.json({ error: "hazardType, severity, and location are required" }, { status: 400 });
+    const rateLimit = checkRateLimit(getClientKey(req, "alerts:observation"), {
+      limit: 30,
+      windowMs: 10 * 60_000,
+    });
+    if (!rateLimit.allowed) {
+      return rateLimitResponse(rateLimit.retryAfterSeconds);
     }
 
+    const sessionId = await getSessionId();
+    const body = await req.json();
+    const parsed = CitizenObservationSchema.safeParse(body);
+
+    if (!parsed.success) {
+      return NextResponse.json(
+        { error: "Invalid observation payload", details: parsed.error.format() },
+        { status: 400 }
+      );
+    }
+
+    const observationInput = parsed.data;
     const observation = await prisma.userObservation.create({
       data: {
         sessionId,
-        hazardType: body.hazardType,
-        severity: body.severity,
-        location: body.location,
-        latitude: body.latitude ? parseFloat(body.latitude) : null,
-        longitude: body.longitude ? parseFloat(body.longitude) : null,
-        description: body.description || "",
+        hazardType: observationInput.hazardType,
+        severity: observationInput.severity,
+        location: observationInput.location,
+        latitude: observationInput.latitude,
+        longitude: observationInput.longitude,
+        description: observationInput.description,
       }
     });
 
     return NextResponse.json({ success: true, observation });
   } catch (error: any) {
     console.error("[API/Alerts/POST] Error creating observation:", error);
-    return NextResponse.json({ error: "Internal Server Error", details: error.message }, { status: 500 });
+    return publicErrorResponse("Internal Server Error", 500, error);
   }
 }
 
@@ -74,8 +89,9 @@ export async function PATCH(req: NextRequest) {
   try {
     const sessionId = await getSessionId();
     const body = await req.json();
+    const alertId = sanitizeText(body.alertId, 120);
     
-    if (!body.alertId) {
+    if (!alertId) {
       return NextResponse.json({ error: "alertId is required" }, { status: 400 });
     }
 
@@ -83,19 +99,19 @@ export async function PATCH(req: NextRequest) {
       where: {
         sessionId_alertId: {
           sessionId,
-          alertId: body.alertId
+          alertId
         }
       },
       update: {},
       create: {
         sessionId,
-        alertId: body.alertId
+        alertId
       }
     });
 
     return NextResponse.json({ success: true, ack });
   } catch (error: any) {
     console.error("[API/Alerts/PATCH] Error acknowledging alert:", error);
-    return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
+    return publicErrorResponse("Internal Server Error", 500, error);
   }
 }

@@ -1,7 +1,10 @@
 import { callOpenRouter } from "@/lib/ai/openrouter";
+import { buildUntrustedJsonContext } from "@/lib/ai/context";
 import { parseAndValidate } from "@/lib/ai/response-parser";
 import { TravelAdvisoryResponseSchema } from "@/lib/ai/schemas";
 import { TRAVEL_ADVISORY_PROMPT } from "@/lib/ai/system-prompts";
+import { getClientKey, checkRateLimit, publicErrorResponse, rateLimitResponse } from "@/lib/security/api";
+import { normalizeLocale, TravelDetailsSchema } from "@/lib/security/input";
 import { calculateRisk } from "@/lib/weather/risk-engine";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
@@ -9,22 +12,25 @@ import { z } from "zod";
 const RequestSchema = z.object({
   originWeather: z.any().nullable(),
   destinationWeather: z.any().nullable(),
-  travelDetails: z.object({
-    originName: z.string(),
-    destinationName: z.string(),
-    departureTime: z.string(),
-    returnTime: z.string().optional(),
-    travelMode: z.string(), // public, private, 2wheeler, etc.
-    flexible: z.boolean().default(true),
-    hasVulnerablePassengers: z.boolean().default(false),
-  }),
-  locale: z.string().default("en"),
+  travelDetails: TravelDetailsSchema,
+  locale: z.preprocess((value) => normalizeLocale(value), z.enum(["en", "hi", "mr"])).default("en"),
 });
+
+export const dynamic = "force-dynamic";
+export const runtime = "nodejs";
 
 export async function POST(req: NextRequest) {
   console.log("[API/AI/TravelAdvisory] Processing travel advisory request");
   
   try {
+    const rateLimit = checkRateLimit(getClientKey(req, "ai:travel"), {
+      limit: 12,
+      windowMs: 60_000,
+    });
+    if (!rateLimit.allowed) {
+      return rateLimitResponse(rateLimit.retryAfterSeconds);
+    }
+
     const body = await req.json();
     const parsedRequest = RequestSchema.safeParse(body);
     
@@ -41,16 +47,22 @@ export async function POST(req: NextRequest) {
     const originRisk = calculateRisk(originWeather);
     const destinationRisk = calculateRisk(destinationWeather);
 
-    const contextText = `
-    Language requested: ${locale}
-    Route: ${travelDetails.originName} to ${travelDetails.destinationName}
-    Mode of travel: ${travelDetails.travelMode}
-    Flexible to postpone: ${travelDetails.flexible ? "Yes" : "No"}
-    Vulnerable passengers: ${travelDetails.hasVulnerablePassengers ? "Yes" : "No"}
-
-    Origin computed risk: ${originRisk.overall} (Reasons: ${originRisk.reasons.join(", ")})
-    Destination computed risk: ${destinationRisk.overall} (Reasons: ${destinationRisk.reasons.join(", ")})
-    `;
+    const contextText = buildUntrustedJsonContext({
+      locale,
+      travelDetails,
+      originRisk: {
+        overall: originRisk.overall,
+        travel: originRisk.travel,
+        flooding: originRisk.flooding,
+        reasons: originRisk.reasons,
+      },
+      destinationRisk: {
+        overall: destinationRisk.overall,
+        travel: destinationRisk.travel,
+        flooding: destinationRisk.flooding,
+        reasons: destinationRisk.reasons,
+      },
+    });
 
     const messages = [
       { role: "system" as const, content: TRAVEL_ADVISORY_PROMPT },
@@ -83,10 +95,7 @@ export async function POST(req: NextRequest) {
     }
   } catch (error: any) {
     console.error("[API/AI/TravelAdvisory] Internal server handler error:", error);
-    return NextResponse.json(
-      { error: "Internal Server Error", details: error.message },
-      { status: 500 }
-    );
+    return publicErrorResponse("Internal Server Error", 500, error);
   }
 }
 

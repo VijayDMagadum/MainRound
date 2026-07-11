@@ -202,7 +202,7 @@ describe("Multi-Hazard Escalation", () => {
 
     const result = calculateRisk(forecast);
     expect(result.overall).toBe("severe"); // escalated from high
-    expect(result.reasons.some(r => r.includes("SEVERERISKescalated")) || result.reasons.some(r => r.includes("multi-hazard")) || true).toBe(true);
+    expect(result.reasons.some(r => r.includes("multiple overlapping high-level hazards"))).toBe(true);
   });
 });
 

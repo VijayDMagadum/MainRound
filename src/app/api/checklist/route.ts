@@ -1,5 +1,7 @@
 import { getSessionId } from "@/lib/db/session";
 import { prisma } from "@/lib/db/prisma";
+import { publicErrorResponse } from "@/lib/security/api";
+import { sanitizeText } from "@/lib/security/input";
 import { NextRequest, NextResponse } from "next/server";
 
 export const dynamic = "force-dynamic";
@@ -123,7 +125,7 @@ export async function GET(req: NextRequest) {
     return NextResponse.json(items);
   } catch (error: any) {
     console.error("[API/Checklist/GET] Error fetching checklist:", error);
-    return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
+    return publicErrorResponse("Internal Server Error", 500, error);
   }
 }
 
@@ -131,8 +133,9 @@ export async function POST(req: NextRequest) {
   try {
     const sessionId = await getSessionId();
     const body = await req.json();
+    const title = sanitizeText(body.title, 120);
 
-    if (!body.title) {
+    if (title.length < 2) {
       return NextResponse.json({ error: "Title is required" }, { status: 400 });
     }
 
@@ -146,10 +149,10 @@ export async function POST(req: NextRequest) {
     const newItem = await prisma.checklistItem.create({
       data: {
         sessionId,
-        title: body.title,
-        description: body.description || "",
-        category: body.category || "custom",
-        quantity: body.quantity || "",
+        title,
+        description: sanitizeText(body.description, 500),
+        category: sanitizeText(body.category || "custom", 40),
+        quantity: sanitizeText(body.quantity, 80),
         isRequired: body.isRequired !== false,
         isCompleted: false,
         isCustom: true,
@@ -160,7 +163,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json(newItem);
   } catch (error: any) {
     console.error("[API/Checklist/POST] Error creating checklist item:", error);
-    return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
+    return publicErrorResponse("Internal Server Error", 500, error);
   }
 }
 
@@ -179,10 +182,10 @@ export async function PATCH(req: NextRequest) {
         sessionId, // ensure security context
       },
       data: {
-        ...(body.title !== undefined && { title: body.title }),
-        ...(body.description !== undefined && { description: body.description }),
+        ...(body.title !== undefined && { title: sanitizeText(body.title, 120) }),
+        ...(body.description !== undefined && { description: sanitizeText(body.description, 500) }),
         ...(body.isCompleted !== undefined && { isCompleted: body.isCompleted }),
-        ...(body.quantity !== undefined && { quantity: body.quantity }),
+        ...(body.quantity !== undefined && { quantity: sanitizeText(body.quantity, 80) }),
         ...(body.position !== undefined && { position: body.position }),
       },
     });
@@ -190,7 +193,7 @@ export async function PATCH(req: NextRequest) {
     return NextResponse.json({ success: true, count: updated.count });
   } catch (error: any) {
     console.error("[API/Checklist/PATCH] Error updating checklist item:", error);
-    return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
+    return publicErrorResponse("Internal Server Error", 500, error);
   }
 }
 
@@ -223,6 +226,6 @@ export async function DELETE(req: NextRequest) {
     return NextResponse.json({ success: true });
   } catch (error: any) {
     console.error("[API/Checklist/DELETE] Error deleting checklist item:", error);
-    return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
+    return publicErrorResponse("Internal Server Error", 500, error);
   }
 }

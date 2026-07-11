@@ -28,6 +28,20 @@
       "updatedAt": "2026-07-11T08:10:59.517Z",
       "sessionId": "d60a90aa-e2d9-4da0-9250-a75310d33ae2",
       "alertId": "alert-123"
+    },
+    {
+      "id": "691ff9a9-7a57-41ba-8b2c-81b5512f7752",
+      "createdAt": "2026-07-11T08:32:35.428Z",
+      "updatedAt": "2026-07-11T08:32:35.428Z",
+      "sessionId": "8d063399-8dab-4355-89d3-71238ab72f48",
+      "alertId": "alert-123"
+    },
+    {
+      "id": "01852789-1b76-4476-b55d-1679b4f53f9c",
+      "createdAt": "2026-07-11T08:33:39.665Z",
+      "updatedAt": "2026-07-11T08:33:39.666Z",
+      "sessionId": "72c2a3e6-9780-4630-ab58-f5740e510479",
+      "alertId": "alert-123"
     }
   ],
   "travelAdvisory": [],
