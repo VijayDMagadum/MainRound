@@ -25,7 +25,8 @@
     "recharts": "^3.9.2",
     "tailwind-merge": "^3.6.0",
     "web-push": "^3.6.7",
-    "zod": "^4.4.3"
+    "zod": "^4.4.3",
+    "prisma": "^5.22.0"
   },
   "devDependencies": {
     "@playwright/test": "^1.61.1",
@@ -39,7 +40,6 @@
     "eslint": "^9",
     "eslint-config-next": "16.2.10",
     "jsdom": "^29.1.1",
-    "prisma": "^5.22.0",
     "tailwindcss": "^4",
     "typescript": "^5",
     "vitest": "^4.1.10"
