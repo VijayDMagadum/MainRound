@@ -1,7 +1,10 @@
 import fs from "fs";
 import path from "path";
+import { cookies } from "next/headers";
 
-// Locate a writeable database path
+const isTesting = typeof process.env.VITEST !== "undefined";
+
+// Locate worker-isolated database paths for testing/build fallbacks
 const workerId = process.env.VITEST_WORKER_ID || "";
 const suffix = workerId ? `_test_worker_${workerId}` : "";
 const DB_FILE = process.env.NODE_ENV === "production"
@@ -25,6 +28,7 @@ interface DBState {
   pushSubscription: any[];
   userObservation: any[];
   alert: any[];
+  [key: string]: any[];
 }
 
 function getInitialState(): DBState {
@@ -72,17 +76,92 @@ function writeDB(state: DBState) {
   }
 }
 
+// Global in-memory variables for shared crowd-sourced alerts & subscriptions
+let globalObservations: any[] = [
+  {
+    id: "seed-obs-1",
+    sessionId: "system",
+    hazardType: "waterlogging",
+    severity: "high",
+    location: "Dharavi Junction, Mumbai",
+    description: "Water accumulating up to knees near junction. Traffic slow.",
+    createdAt: new Date().toISOString()
+  },
+  {
+    id: "seed-obs-2",
+    sessionId: "system",
+    hazardType: "power_outage",
+    severity: "moderate",
+    location: "Kothrud, Pune",
+    description: "Transformer spark led to localized power outage. Repair team active.",
+    createdAt: new Date().toISOString()
+  }
+];
+
+let globalAlerts: any[] = [
+  {
+    id: "seed-alert-1",
+    title: "Severe Rainfall Warning",
+    description: "Heavy downpours forecast for next 24 hours. Limit outdoor commutes.",
+    severity: "high",
+    location: "Mumbai & Coastline",
+    createdAt: new Date().toISOString()
+  }
+];
+
+let globalPushSubscriptions: any[] = [];
+
+// Cookie-backed store helper
+async function getStore(key: string): Promise<any[]> {
+  if (isTesting) {
+    return readDB()[key] || [];
+  }
+  try {
+    const cookieStore = await cookies();
+    const val = cookieStore.get(`saathi_${key}`)?.value;
+    if (val) {
+      return JSON.parse(decodeURIComponent(val));
+    }
+  } catch (e) {
+    // Fallback to file db during build-time static rendering
+    return readDB()[key] || [];
+  }
+  return [];
+}
+
+async function setStore(key: string, data: any[]) {
+  if (isTesting) {
+    const db = readDB();
+    db[key] = data;
+    writeDB(db);
+    return;
+  }
+  try {
+    const cookieStore = await cookies();
+    cookieStore.set(`saathi_${key}`, encodeURIComponent(JSON.stringify(data)), {
+      path: "/",
+      sameSite: "lax",
+      maxAge: 60 * 60 * 24 * 365,
+      httpOnly: false
+    });
+  } catch (e) {
+    // Fallback to file db during build-time static rendering
+    const db = readDB();
+    db[key] = data;
+    writeDB(db);
+  }
+}
+
 // Populate nested relations emulating Prisma's 'include' behavior
-function populateRelations(key: string, item: any, include: any): any {
+async function populateRelations(key: string, item: any, include: any): Promise<any> {
   if (!item || !include) return item;
-  const db = readDB();
   const result = { ...item };
 
   if (key === "savedLocation") {
     if (include.session) {
-      let session = db.userSession.find(s => s.id === item.sessionId) || null;
-      if (session && typeof include.session === "object") {
-        session = populateRelations("userSession", session, include.session.include || include.session);
+      let session = { id: item.sessionId, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() };
+      if (typeof include.session === "object") {
+        session = await populateRelations("userSession", session, include.session.include || include.session);
       }
       result.session = session;
     }
@@ -91,63 +170,86 @@ function populateRelations(key: string, item: any, include: any): any {
   if (key === "userSession") {
     const sessionId = item.id;
     if (include.profile) {
-      result.profile = db.householdProfile.find(p => p.sessionId === sessionId) || null;
+      const profiles = await getStore("householdProfile");
+      result.profile = profiles.find(p => p.sessionId === sessionId) || null;
     }
     if (include.locations) {
-      result.locations = db.savedLocation.filter(l => l.sessionId === sessionId);
+      const locations = await getStore("savedLocation");
+      result.locations = locations.filter(l => l.sessionId === sessionId);
     }
     if (include.preparednessPlan) {
-      result.preparednessPlan = db.preparednessPlan.find(p => p.sessionId === sessionId) || null;
+      const plans = await getStore("preparednessPlan");
+      result.preparednessPlan = plans.find(p => p.sessionId === sessionId) || null;
     }
     if (include.preparednessTasks) {
-      result.preparednessTasks = db.preparednessTask.filter(t => t.sessionId === sessionId);
+      const tasks = await getStore("preparednessTask");
+      result.preparednessTasks = tasks.filter(t => t.sessionId === sessionId);
     }
     if (include.checklistItems) {
-      result.checklistItems = db.checklistItem.filter(c => c.sessionId === sessionId);
+      const checklistItems = await getStore("checklistItem");
+      result.checklistItems = checklistItems.filter(c => c.sessionId === sessionId);
     }
     if (include.weatherSnapshots) {
-      result.weatherSnapshots = db.weatherSnapshot.filter(w => w.sessionId === sessionId);
+      const weatherSnapshots = await getStore("weatherSnapshot");
+      result.weatherSnapshots = weatherSnapshots.filter(w => w.sessionId === sessionId);
     }
     if (include.riskAssessments) {
-      result.riskAssessments = db.riskAssessment.filter(r => r.sessionId === sessionId);
+      const riskAssessments = await getStore("riskAssessment");
+      result.riskAssessments = riskAssessments.filter(r => r.sessionId === sessionId);
     }
     if (include.alertAcknowledgements) {
-      result.alertAcknowledgements = db.alertAcknowledgement.filter(a => a.sessionId === sessionId);
+      const alertAcknowledgements = await getStore("alertAcknowledgement");
+      result.alertAcknowledgements = alertAcknowledgements.filter(a => a.sessionId === sessionId);
     }
     if (include.travelAdvisories) {
-      result.travelAdvisories = db.travelAdvisory.filter(t => t.sessionId === sessionId);
+      const travelAdvisories = await getStore("travelAdvisory");
+      result.travelAdvisories = travelAdvisories.filter(t => t.sessionId === sessionId);
     }
     if (include.emergencyContacts) {
-      result.emergencyContacts = db.emergencyContact.filter(e => e.sessionId === sessionId);
+      const emergencyContacts = await getStore("emergencyContact");
+      result.emergencyContacts = emergencyContacts.filter(e => e.sessionId === sessionId);
     }
     if (include.communityPlan) {
-      result.communityPlan = db.communityPlan.find(c => c.sessionId === sessionId) || null;
+      const communityPlans = await getStore("communityPlan");
+      result.communityPlan = communityPlans.find(c => c.sessionId === sessionId) || null;
     }
     if (include.pushSubscriptions) {
-      result.pushSubscriptions = db.pushSubscription.filter(p => p.sessionId === sessionId);
+      result.pushSubscriptions = globalPushSubscriptions.filter(p => p.sessionId === sessionId);
     }
     if (include.userObservations) {
-      result.userObservations = db.userObservation.filter(u => u.sessionId === sessionId);
+      result.userObservations = globalObservations.filter(u => u.sessionId === sessionId);
     }
   }
   return result;
 }
 
-class Collection {
-  private key: keyof DBState;
-  
-  constructor(key: keyof DBState) {
-    this.key = key;
+class CookieCollection {
+  private name: string;
+  private isGlobal: boolean;
+
+  constructor(name: string, isGlobal = false) {
+    this.name = name;
+    this.isGlobal = isGlobal;
   }
 
-  private getList(): any[] {
-    return readDB()[this.key] || [];
+  private async getList(): Promise<any[]> {
+    if (this.isGlobal) {
+      if (this.name === "userObservation") return globalObservations;
+      if (this.name === "alert") return globalAlerts;
+      if (this.name === "pushSubscription") return globalPushSubscriptions;
+      return [];
+    }
+    return getStore(this.name);
   }
 
-  private setList(list: any[]) {
-    const db = readDB();
-    db[this.key] = list;
-    writeDB(db);
+  private async setList(list: any[]) {
+    if (this.isGlobal) {
+      if (this.name === "userObservation") globalObservations = list;
+      if (this.name === "alert") globalAlerts = list;
+      if (this.name === "pushSubscription") globalPushSubscriptions = list;
+      return;
+    }
+    await setStore(this.name, list);
   }
 
   private match(item: any, where: any): boolean {
@@ -156,7 +258,7 @@ class Collection {
       const val = where[key];
       if (val === undefined) continue;
 
-      // Handle compound keys like sessionId_alertId
+      // Handle compound unique index key filters
       if (key.includes("_") && typeof val === "object" && val !== null) {
         for (const subKey of Object.keys(val)) {
           if (item[subKey] !== val[subKey]) return false;
@@ -180,27 +282,24 @@ class Collection {
   }
 
   async findUnique(query: any = {}) {
-    const list = this.getList();
+    const list = await this.getList();
     const where = query.where || {};
     const item = list.find(item => this.match(item, where)) || null;
-    return populateRelations(this.key, item, query.include);
+    return populateRelations(this.name, item, query.include);
   }
 
   async findFirst(query: any = {}) {
-    const list = this.getList();
+    const list = await this.getList();
     const where = query.where || {};
     const item = list.find(item => this.match(item, where)) || null;
-    return populateRelations(this.key, item, query.include);
+    return populateRelations(this.name, item, query.include);
   }
 
   async findMany(query: any = {}) {
-    let list = this.getList();
+    let list = await this.getList();
     const where = query.where || {};
-    
-    // Filtering
     list = list.filter(item => this.match(item, where));
 
-    // Sorting
     if (query.orderBy) {
       const orderKeys = Object.keys(query.orderBy);
       if (orderKeys.length > 0) {
@@ -216,29 +315,32 @@ class Collection {
       }
     }
 
-    // Limit/Take
     if (typeof query.take === "number") {
       list = list.slice(0, query.take);
     }
 
-    return list.map(item => populateRelations(this.key, item, query.include));
+    const mapped = [];
+    for (const item of list) {
+      mapped.push(await populateRelations(this.name, item, query.include));
+    }
+    return mapped;
   }
 
   async create(query: any) {
-    const list = this.getList();
-    const data = { 
-      id: crypto.randomUUID(), 
+    const list = await this.getList();
+    const data = {
+      id: crypto.randomUUID(),
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
-      ...query.data 
+      ...query.data
     };
     list.push(data);
-    this.setList(list);
-    return populateRelations(this.key, data, query.include);
+    await this.setList(list);
+    return populateRelations(this.name, data, query.include);
   }
 
   async createMany(query: any) {
-    const list = this.getList();
+    const list = await this.getList();
     const added = (query.data || []).map((item: any) => ({
       id: crypto.randomUUID(),
       createdAt: new Date().toISOString(),
@@ -246,16 +348,16 @@ class Collection {
       ...item
     }));
     list.push(...added);
-    this.setList(list);
+    await this.setList(list);
     return { count: added.length };
   }
 
   async update(query: any) {
-    const list = this.getList();
+    const list = await this.getList();
     const where = query.where || {};
     const idx = list.findIndex(item => this.match(item, where));
     if (idx === -1) {
-      throw new Error(`Record not found in ${this.key}`);
+      throw new Error(`Record not found in ${this.name}`);
     }
     const updated = {
       ...list[idx],
@@ -263,12 +365,12 @@ class Collection {
       updatedAt: new Date().toISOString()
     };
     list[idx] = updated;
-    this.setList(list);
-    return populateRelations(this.key, updated, query.include);
+    await this.setList(list);
+    return populateRelations(this.name, updated, query.include);
   }
 
   async updateMany(query: any) {
-    const list = this.getList();
+    const list = await this.getList();
     const where = query.where || {};
     let count = 0;
     const updatedList = list.map(item => {
@@ -282,12 +384,12 @@ class Collection {
       }
       return item;
     });
-    this.setList(updatedList);
+    await this.setList(updatedList);
     return { count };
   }
 
   async upsert(query: any) {
-    const list = this.getList();
+    const list = await this.getList();
     const where = query.where || {};
     const idx = list.findIndex(item => this.match(item, where));
     if (idx !== -1) {
@@ -297,8 +399,8 @@ class Collection {
         updatedAt: new Date().toISOString()
       };
       list[idx] = updated;
-      this.setList(list);
-      return populateRelations(this.key, updated, query.include);
+      await this.setList(list);
+      return populateRelations(this.name, updated, query.include);
     } else {
       const baseData = { ...where };
       for (const k of Object.keys(baseData)) {
@@ -312,26 +414,26 @@ class Collection {
         ...query.create
       };
       list.push(data);
-      this.setList(list);
-      return populateRelations(this.key, data, query.include);
+      await this.setList(list);
+      return populateRelations(this.name, data, query.include);
     }
   }
 
   async delete(query: any) {
-    const list = this.getList();
+    const list = await this.getList();
     const where = query.where || {};
     const idx = list.findIndex(item => this.match(item, where));
     if (idx === -1) {
-      throw new Error(`Record not found in ${this.key}`);
+      throw new Error(`Record not found in ${this.name}`);
     }
     const deleted = list[idx];
     list.splice(idx, 1);
-    this.setList(list);
-    return populateRelations(this.key, deleted, query.include);
+    await this.setList(list);
+    return populateRelations(this.name, deleted, query.include);
   }
 
   async deleteMany(query: any = {}) {
-    const list = this.getList();
+    const list = await this.getList();
     const where = query.where || {};
     let count = 0;
     const filtered = list.filter(item => {
@@ -339,27 +441,27 @@ class Collection {
       if (matches) count++;
       return !matches;
     });
-    this.setList(filtered);
+    await this.setList(filtered);
     return { count };
   }
 }
 
 class EmulatedPrismaClient {
-  userSession = new Collection("userSession");
-  householdProfile = new Collection("householdProfile");
-  savedLocation = new Collection("savedLocation");
-  preparednessPlan = new Collection("preparednessPlan");
-  preparednessTask = new Collection("preparednessTask");
-  checklistItem = new Collection("checklistItem");
-  weatherSnapshot = new Collection("weatherSnapshot");
-  riskAssessment = new Collection("riskAssessment");
-  alertAcknowledgement = new Collection("alertAcknowledgement");
-  travelAdvisory = new Collection("travelAdvisory");
-  emergencyContact = new Collection("emergencyContact");
-  communityPlan = new Collection("communityPlan");
-  pushSubscription = new Collection("pushSubscription");
-  userObservation = new Collection("userObservation");
-  alert = new Collection("alert");
+  userSession = new CookieCollection("userSession");
+  householdProfile = new CookieCollection("householdProfile");
+  savedLocation = new CookieCollection("savedLocation");
+  preparednessPlan = new CookieCollection("preparednessPlan");
+  preparednessTask = new CookieCollection("preparednessTask");
+  checklistItem = new CookieCollection("checklistItem");
+  weatherSnapshot = new CookieCollection("weatherSnapshot");
+  riskAssessment = new CookieCollection("riskAssessment");
+  alertAcknowledgement = new CookieCollection("alertAcknowledgement");
+  travelAdvisory = new CookieCollection("travelAdvisory");
+  emergencyContact = new CookieCollection("emergencyContact");
+  communityPlan = new CookieCollection("communityPlan");
+  pushSubscription = new CookieCollection("pushSubscription", true);
+  userObservation = new CookieCollection("userObservation", true);
+  alert = new CookieCollection("alert", true);
 
   async $connect() {}
   async $disconnect() {}

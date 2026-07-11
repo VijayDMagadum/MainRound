@@ -1,5 +1,11 @@
 {
-  "userSession": [],
+  "userSession": [
+    {
+      "id": "02b45261-d3fa-4e1c-a57a-484f2379a70b",
+      "createdAt": "2026-07-11T07:54:53.335Z",
+      "updatedAt": "2026-07-11T07:54:53.335Z"
+    }
+  ],
   "householdProfile": [
     {
       "id": "f53d6e90-5fc8-48f7-858c-a299e6483ed2",
@@ -21,6 +27,27 @@
       "preferredTravelMode": "public",
       "emergencyContacts": "[]",
       "preferredLanguage": "en"
+    },
+    {
+      "id": "b5de3399-5f1f-4a11-978f-0857dcaf6fcb",
+      "createdAt": "2026-07-11T07:54:53.359Z",
+      "updatedAt": "2026-07-11T07:54:53.359Z",
+      "sessionId": "02b45261-d3fa-4e1c-a57a-484f2379a70b",
+      "dwellingType": "apartment",
+      "floorLevel": 0,
+      "waterloggingProne": false,
+      "nearHazardSource": false,
+      "hasUpperFloor": false,
+      "adults": 1,
+      "children": 0,
+      "olderAdults": 0,
+      "pets": false,
+      "accessibilityNeeds": false,
+      "medicalPowerDependent": false,
+      "vehicleAvailable": "none",
+      "preferredTravelMode": "public",
+      "emergencyContacts": "[{\"name\":\"Local Helpline\",\"phone\":\"1077458751\"}]",
+      "preferredLanguage": "en"
     }
   ],
   "savedLocation": [
@@ -32,6 +59,16 @@
       "name": "Pune",
       "latitude": 18.551391187644075,
       "longitude": 73.79395604472107,
+      "isPrimary": true
+    },
+    {
+      "id": "d8ec61db-2fb2-4719-9dce-7e8d9f085fb2",
+      "createdAt": "2026-07-11T07:54:53.591Z",
+      "updatedAt": "2026-07-11T07:54:53.591Z",
+      "sessionId": "02b45261-d3fa-4e1c-a57a-484f2379a70b",
+      "name": "Sangli, Maharashtra, India",
+      "latitude": 16.85438,
+      "longitude": 74.56417,
       "isPrimary": true
     }
   ],

@@ -14,6 +14,13 @@
       "updatedAt": "2026-07-11T07:54:11.656Z",
       "sessionId": "b2bf85ce-6f1b-486d-b07e-9044b27dec48",
       "alertId": "alert-123"
+    },
+    {
+      "id": "d26d8720-f904-49da-94ca-ff387b07988f",
+      "createdAt": "2026-07-11T07:58:21.046Z",
+      "updatedAt": "2026-07-11T07:58:21.046Z",
+      "sessionId": "97be0e2b-cd97-476e-aba0-7ed46a171386",
+      "alertId": "alert-123"
     }
   ],
   "travelAdvisory": [],
